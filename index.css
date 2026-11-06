@@ -1,35 +1,35 @@
 :root {
     color-scheme: light;
-    --page: #f5f4ef;
-    --surface: #fffefa;
-    --surface-soft: #efefe8;
-    --ink: #292d28;
-    --muted: #a7b4aa;
-    --quiet: #969b91;
-    --line: #e5e6de;
-    --line-strong: #d7dad0;
-    --green: #435d4a;
-    --green-deep: #304837;
-    --green-soft: #e9eee5;
-    --terracotta: #c77b5c;
-    --shadow: 0 16px 40px rgba(37, 43, 35, 0.06);
+    --page: #faf9f6;
+    --surface: #ffffff;
+    --surface-soft: #f4f3ee;
+    --ink: #181917;
+    --muted: #575a55;
+    --quiet: #868a83;
+    --line: #e6e5df;
+    --line-strong: #d2d1c9;
+    --green: #1b6e66;
+    --green-deep: #134e48;
+    --green-soft: #e6f4f2;
+    --terracotta: #b8623f;
+    --shadow: none;
 }
 
 .dark {
     color-scheme: dark;
-    --page: #1d211e;
-    --surface: #252a26;
-    --surface-soft: #2d332e;
-    --ink: #f0f0e9;
-    --muted: #a7b4aa;
-    --quiet: #8d9589;
-    --line: #7c877e;
-    --line-strong: #485148;
-    --green: #adc0a9;
-    --green-deep: #6c7268;
-    --green-soft: #303a31;
+    --page: #141715;
+    --surface: #1b1f1c;
+    --surface-soft: #232824;
+    --ink: #f2f3ee;
+    --muted: #9ba198;
+    --quiet: #787e75;
+    --line: #2e3430;
+    --line-strong: #3f4742;
+    --green: #48b0a5;
+    --green-deep: #2c7a72;
+    --green-soft: #182c28;
     --terracotta: #df9b7d;
-    --shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+    --shadow: none;
 }
 
 * {
@@ -47,7 +47,7 @@ body {
     margin: 0;
     background: var(--page);
     color: var(--ink);
-    font-family: "DM Sans", sans-serif;
+    font-family: "Instrument Sans", "DM Sans", -apple-system, sans-serif;
     font-size: 14px;
     -webkit-font-smoothing: antialiased;
     transition: background-color 180ms ease, color 180ms ease;
@@ -148,7 +148,7 @@ a {
 }
 
 .brand-name {
-    font-family: "DM Serif Display", Georgia, serif;
+    font-family: "Instrument Serif", "DM Serif Display", Georgia, serif;
     font-size: 23px;
     letter-spacing: -0.035em;
     line-height: 1.05;
@@ -564,7 +564,7 @@ a {
 .wardrobe-card:hover {
     transform: translateY(-2px);
     border-color: var(--line-strong);
-    box-shadow: var(--shadow);
+    border-color: var(--line-strong);
 }
 
 .wardrobe-card__media {
@@ -1159,7 +1159,7 @@ textarea.form-control {
     align-items: center;
     gap: 9px;
     color: var(--muted);
-    font-family: monospace;
+    font-family: inherit; font-variant-numeric: tabular-nums;
     font-size: 10px;
 }
 

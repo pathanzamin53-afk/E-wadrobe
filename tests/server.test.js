@@ -274,3 +274,79 @@ test("Vercel fetch handler returns JSON errors for methods, origins, and missing
   assert.equal(missingKey.status, 503);
   assert.match((await missingKey.json()).error, /GROQ_API_KEY/);
 });
+test("supports new occasions like wedding and date in createOutfitSuggestions", async () => {
+  const { createOutfitSuggestions } = require("../server");
+  const outfits = [
+    {
+      itemIds: ["top-1", "bottom-1"],
+      reason: "Smart and elegant styling for a wedding celebration.",
+    },
+  ];
+
+  let capturedPrompt = "";
+  const result = await createOutfitSuggestions(
+    { ...validPayload, occasion: "wedding" },
+    {
+      apiKey: "test-secret",
+      fetchImpl: async (url, options) => {
+        capturedPrompt = options.body;
+        return new Response(
+          JSON.stringify({
+            choices: [{ message: { content: JSON.stringify({ outfits }) } }],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      },
+    }
+  );
+
+  assert.deepEqual(result, { outfits });
+  assert.match(capturedPrompt, /wedding/);
+});
+
+test("supports Gemini provider in createOutfitSuggestions", async () => {
+  const { createOutfitSuggestions } = require("../server");
+  const outfits = [
+    {
+      itemIds: ["top-1", "bottom-1"],
+      reason: "Minimal look perfect for a date night dinner.",
+    },
+  ];
+
+  let capturedUrl = "";
+  const result = await createOutfitSuggestions(
+    { ...validPayload, occasion: "date" },
+    {
+      provider: "gemini",
+      apiKey: "test-gemini-key",
+      model: "gemini-1.5-flash",
+      fetchImpl: async (url, options) => {
+        capturedUrl = url;
+        return new Response(
+          JSON.stringify({
+            candidates: [
+              {
+                content: {
+                  parts: [{ text: JSON.stringify({ outfits }) }],
+                },
+              },
+            ],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      },
+    }
+  );
+
+  assert.deepEqual(result, { outfits });
+  assert.match(capturedUrl, /generativelanguage\.googleapis\.com/);
+  assert.match(capturedUrl, /test-gemini-key/);
+});
+
+test("uploadToCloudinary falls back to local data URL when credentials missing", async () => {
+  const { uploadToCloudinary } = require("../server");
+  const fakeDataUrl = "data:image/jpeg;base64,abcdef123456";
+  const result = await uploadToCloudinary({ image: fakeDataUrl });
+  assert.equal(result.url, fakeDataUrl);
+  assert.match(result.warning, /stored locally/);
+});

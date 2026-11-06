@@ -8,7 +8,7 @@
   <title>E-Wardrobe — Your wardrobe, considered</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link rel="stylesheet" href="index.css">
   <link rel="icon" type="image/png" href="Favicon.png">
@@ -56,20 +56,15 @@
 
   <main class="page-shell">
     <section class="page-intro" aria-labelledby="page-title">
-      <div>
-        <p class="eyebrow"><span class="eyebrow-mark" aria-hidden="true"></span>Your clothes, in one place</p>
-        <h1 id="page-title">Your wardrobe,<br class="mobile-break"> considered.</h1>
-        <p class="intro-copy">Keep track of the pieces you own and put together outfits for the season.</p>
-      </div>
-      <div class="intro-note">
-        <span class="intro-note-label">A little more personal</span>
-        <span class="intro-note-text">Outfit ideas from<br>what you already own.</span>
+      <div class="intro-masthead">
+        <h1 id="page-title">Your wardrobe, in good order.</h1>
+        <p class="intro-copy">Catalog your garments and discover considered outfit combinations from pieces you already own.</p>
       </div>
     </section>
 
     <section class="season-toolbar" aria-labelledby="season-title">
       <div class="toolbar-heading">
-        <span class="section-kicker">Browse</span>
+        
         <h2 id="season-title">By season</h2>
       </div>
       <div class="season-filters" role="group" aria-label="Filter wardrobe by season">
@@ -92,7 +87,7 @@
       <section class="catalog-section" aria-labelledby="closet-title">
         <div class="catalog-heading">
           <div>
-            <p class="section-kicker">Your collection</p>
+            
             <div class="title-with-count">
               <h2 id="closet-title">The closet</h2>
               <span id="items-count-tag" class="item-count">0</span>
@@ -132,7 +127,9 @@
               <option value="streetwear">Streetwear</option>
               <option value="formal">Work &amp; formal</option>
               <option value="sporty">Sport &amp; active</option>
-              <option value="party">Evening</option>
+              <option value="party">Evening &amp; Party</option>
+              <option value="wedding">Wedding &amp; Traditional</option>
+              <option value="date">Date Night</option>
             </select>
           </div>
 
@@ -140,14 +137,14 @@
             <span>Suggest outfits</span>
             <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
           </button>
-          <p class="privacy-note"><i class="fa-solid fa-lock" aria-hidden="true"></i> Item details and style preferences go to Groq; photos stay here.</p>
+          <p class="privacy-note"><i class="fa-solid fa-lock" aria-hidden="true"></i> AI analyzes your wardrobe combinations based on your pieces and style preferences.</p>
           <p id="ai-status" class="ai-status" role="status" aria-live="polite"></p>
         </section>
 
         <section class="recommendations-section" aria-labelledby="recommendations-title">
           <div class="section-heading-row">
             <div>
-              <p class="section-kicker">Made from your closet</p>
+              
               <h2 id="recommendations-title">Outfit ideas</h2>
             </div>
             <span id="combos-found-tag" class="results-count">Not generated</span>
@@ -163,7 +160,7 @@
         <section class="palette-card" aria-labelledby="palette-title">
           <div class="palette-heading">
             <div>
-              <p class="section-kicker">At a glance</p>
+              
               <h2 id="palette-title">Your color palette</h2>
             </div>
             <i class="fa-solid fa-circle-half-stroke palette-icon" aria-hidden="true"></i>
@@ -191,7 +188,7 @@
     <div class="modal-card" id="modal-container">
       <div class="modal-header">
         <div>
-          <p class="section-kicker">Your collection</p>
+          
           <h2 id="upload-modal-title">Add a piece</h2>
         </div>
         <button type="button" onclick="closeUploadModal()" class="icon-button modal-close" aria-label="Close add item dialog">
@@ -201,13 +198,13 @@
 
       <form id="upload-form" onsubmit="handleFormSubmit(event)" class="modal-form">
         <div>
-          <label class="field-label" for="item-image-file">Photo <span>Optional</span></label>
+          <label class="field-label" for="item-image-file">Photos <span>Select 1 or multiple</span></label>
           <div id="drop-zone" class="drop-zone">
-            <input type="file" id="item-image-file" accept="image/*" onchange="previewSelectedImage(event)">
+            <input type="file" id="item-image-file" accept="image/*" multiple onchange="previewSelectedImage(event)">
             <div id="upload-placeholder" class="upload-placeholder">
               <i class="fa-solid fa-arrow-up-from-bracket" aria-hidden="true"></i>
-              <span>Choose a photo of this piece</span>
-              <small>PNG, JPG or WEBP</small>
+              <span>Choose one or multiple photos</span>
+              <small>PNG, JPG or WEBP · Multiple photos auto-categorized by AI</small>
             </div>
             <div id="preview-wrapper" class="preview-wrapper hidden">
               <img id="image-preview" src="" alt="Selected garment preview">
@@ -215,6 +212,10 @@
                 <i class="fa-solid fa-xmark" aria-hidden="true"></i>
               </button>
             </div>
+          </div>
+          <div id="batch-upload-status" class="hidden" style="margin-top: 10px; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; background: var(--green-soft); color: var(--ink); display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-wand-magic-sparkles" style="color: var(--green)"></i>
+            <span id="batch-status-text">AI is auto-categorizing...</span>
           </div>
         </div>
 
@@ -275,8 +276,7 @@
     <div class="modal-card">
       <div class="modal-header">
         <div>
-          <p class="section-kicker">Outfit preferences</p>
-          <h2 id="profile-modal-title">Your style profile</h2>
+                    <h2 id="profile-modal-title">Your style profile</h2>
         </div>
         <button type="button" onclick="closeProfileModal()" class="icon-button modal-close" aria-label="Close style profile">
           <i class="fa-solid fa-xmark" aria-hidden="true"></i>

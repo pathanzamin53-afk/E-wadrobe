@@ -222,14 +222,14 @@ function loadSavedWardrobe() {
   const storedData = localStorage.getItem(STORAGE_KEY);
   if (storedData) {
     try {
-      wardrobeItems = JSON.parse(storedData);
+      wardrobeItems = JSON.parse(storedData).filter((item) => !String(item.id).startsWith("sample-"));
     } catch (e) {
-      wardrobeItems = [...SAMPLE_STARTER_ITEMS];
+      wardrobeItems = [];
     }
   } else {
-    wardrobeItems = [...SAMPLE_STARTER_ITEMS];
-    saveWardrobeToStorage();
+    wardrobeItems = [];
   }
+  saveWardrobeToStorage();
   renderWardrobeGrid();
   updateBadgeCounts();
 }
@@ -241,8 +241,8 @@ function saveWardrobeToStorage() {
 }
 
 function resetToDefaultData() {
-  if (confirm("Restore sample wardrobe starter pack?")) {
-    wardrobeItems = [...SAMPLE_STARTER_ITEMS];
+  if (confirm("Clear all wardrobe items?")) {
+    wardrobeItems = [];
     saveWardrobeToStorage();
     renderWardrobeGrid();
   }
@@ -482,6 +482,14 @@ function getOccasionBonus(item, occasion) {
     if (/\b(blazer|heels|loafer|leather|satin|party|evening)\b/.test(title))
       return 8;
     if (item.pattern === "graphic") return 2;
+  } else if (occasion === "wedding") {
+    if (/\b(suit|blazer|tuxedo|kurta|sherwani|traditional|silk|trousers|formal|oxford|loafer|dress)\b/.test(title)) return 12;
+    if (item.category === "cap" || item.pattern === "graphic") return -20;
+    if (/\b(tee|t-shirt|shorts|hoodie|sweatpants)\b/.test(title)) return -25;
+  } else if (occasion === "date") {
+    if (/\b(shirt|blazer|jacket|chinos|clean|loafer|boots|smart|dress)\b/.test(title)) return 9;
+    if (item.pattern === "solid") return 3;
+    if (/\b(sweatpants|gym|athletic|runner)\b/.test(title)) return -15;
   } else if (occasion === "casual") {
     if (/\b(tee|t-shirt|jeans|sneaker|hoodie|casual)\b/.test(title)) return 5;
   }
@@ -825,7 +833,7 @@ function runAIGenerator() {
     return item.category !== "cap";
   };
   const availableItems =
-    selectedOccasion === "formal"
+    (selectedOccasion === "formal" || selectedOccasion === "wedding")
       ? seasonItems.filter(isFormalReady)
       : seasonItems;
 
@@ -837,7 +845,7 @@ function runAIGenerator() {
 
   if (tops.length === 0 || bottoms.length === 0) {
     alert(
-      selectedOccasion === "formal"
+      (selectedOccasion === "formal" || selectedOccasion === "wedding")
         ? "No formal-ready Top and Bottom found. Add items such as a shirt and chinos, or choose another occasion."
         : "Please add at least 1 Top and 1 Bottom to generate outfit combinations.",
     );
@@ -862,7 +870,7 @@ function runAIGenerator() {
           ).filter(Boolean)
         : [null];
       const capOptions =
-        selectedOccasion === "formal"
+        (selectedOccasion === "formal" || selectedOccasion === "wedding")
           ? [null]
           : getAccessoryOptions(caps, top, bottom, "cap", selectedOccasion);
       const layeringOptions = getAccessoryOptions(
@@ -998,8 +1006,8 @@ async function requestGroqOutfits(availableItems, occasion, localOutfits) {
       return combo;
     });
 
-    renderTopOutfits(aiOutfits, occasion, "groq");
-    setAIGeneratorStatus("Groq picked these combinations from your wardrobe.");
+    renderTopOutfits(aiOutfits, occasion, "ai");
+    setAIGeneratorStatus("AI Stylist picked these combinations from your wardrobe.");
   } catch (error) {
     console.error("Could not generate Groq outfit suggestions.", error);
     renderTopOutfits(localOutfits, occasion, "local");
@@ -1019,7 +1027,7 @@ function renderTopOutfits(combos, occasion, source = "groq") {
   container.innerHTML = "";
 
   document.getElementById("combos-found-tag").innerText =
-    `${combos.length} ${combos.length === 1 ? "outfit" : "outfits"} · ${source === "groq" ? "Groq AI" : "Local picks"}`;
+    `${combos.length} ${combos.length === 1 ? "outfit" : "outfits"} · ${source === "ai" || source === "groq" ? "AI Stylist" : "Local picks"}`;
 
   combos.forEach((combo, index) => {
     const card = document.createElement("div");
@@ -1029,7 +1037,7 @@ function renderTopOutfits(combos, occasion, source = "groq") {
           <div class="outfit-card__header">
             <span class="outfit-card__rank">
               <span class="outfit-card__number">${String(index + 1).padStart(2, "0")}</span>
-              <span>${source === "groq" ? "Groq stylist" : "Suggested look"}</span>
+              <span>${source === "ai" || source === "groq" ? "AI Stylist" : "Suggested look"}</span>
             </span>
             <div class="outfit-card__score">
               <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
@@ -1134,21 +1142,124 @@ function closeUploadModal() {
   clearPreviewImage();
 }
 
-function previewSelectedImage(event) {
-  const file = event.target.files[0];
-  if (!file) return;
+function compressImage(file, maxDimension = 512, quality = 0.75) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          } else {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    currentUploadedDataUrl = e.target.result;
+async function previewSelectedImage(event) {
+  const files = Array.from(event.target.files || []);
+  if (!files.length) return;
+
+  const statusBox = document.getElementById("batch-upload-status");
+  const statusText = document.getElementById("batch-status-text");
+
+  // Batch upload: multiple photos selected -> auto-analyze all with AI
+  if (files.length > 1) {
+    if (statusBox) statusBox.classList.remove("hidden");
+    const saveBtn = document.querySelector("#upload-form button[type='submit']");
+    if (saveBtn) saveBtn.disabled = true;
+
+    for (let i = 0; i < files.length; i++) {
+      if (statusText) {
+        statusText.innerText = `AI categorizing photo ${i + 1} of ${files.length}...`;
+      }
+      try {
+        const compressed = await compressImage(files[i], 512, 0.75);
+        const res = await fetch("/api/analyze-item", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image: compressed }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.title) {
+            wardrobeItems.unshift(data);
+          }
+        }
+      } catch (err) {
+        console.error("Batch item analysis error:", err);
+      }
+    }
+
+    saveWardrobeToStorage();
+    renderWardrobeGrid();
+    if (statusBox) statusBox.classList.add("hidden");
+    if (saveBtn) saveBtn.disabled = false;
+    closeUploadModal();
+    return;
+  }
+
+  // Single photo: preview and auto-detect details for form
+  const file = files[0];
+  try {
+    const compressed = await compressImage(file, 512, 0.75);
+    currentUploadedDataUrl = compressed;
     document.getElementById("image-preview").src = currentUploadedDataUrl;
     document.getElementById("upload-placeholder").classList.add("hidden");
     document.getElementById("preview-wrapper").classList.remove("hidden");
-
-    // Auto extract dominant color using Canvas HTML5
     extractDominantColor(currentUploadedDataUrl);
-  };
-  reader.readAsDataURL(file);
+
+    if (statusBox) {
+      statusBox.classList.remove("hidden");
+      statusText.innerText = "AI is detecting garment details...";
+    }
+    fetch("/api/analyze-item", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image: compressed }),
+    })
+      .then(async (r) => {
+        if (r.ok) {
+          const item = await r.json();
+          if (item) {
+            if (item.title) document.getElementById("item-title").value = item.title;
+            if (item.category) document.getElementById("item-category").value = item.category;
+            if (item.color) {
+              document.getElementById("item-color").value = item.color;
+              document.getElementById("color-hex-text").innerText = item.color;
+            }
+            if (item.pattern) document.getElementById("item-pattern").value = item.pattern;
+            if (item.season) document.getElementById("item-season").value = item.season;
+            if (item.image) currentUploadedDataUrl = item.image;
+          }
+        }
+      })
+      .catch((e) => console.warn("Auto-tagging error:", e))
+      .finally(() => {
+        if (statusBox) statusBox.classList.add("hidden");
+      });
+  } catch (err) {
+    console.error("Image preview/compression failed:", err);
+    if (statusBox) statusBox.classList.add("hidden");
+  }
 }
 
 function clearPreviewImage(event) {
@@ -1193,7 +1304,7 @@ function extractDominantColor(dataUrl) {
   img.src = dataUrl;
 }
 
-function handleFormSubmit(event) {
+async function handleFormSubmit(event) {
   event.preventDefault();
 
   const title = document.getElementById("item-title").value.trim();
@@ -1205,6 +1316,29 @@ function handleFormSubmit(event) {
   const defaultPlaceholderSvg =
     'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24" fill="none" stroke="%236366f1" stroke-width="1.5"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>';
 
+  let imageUrl = currentUploadedDataUrl || defaultPlaceholderSvg;
+
+  if (currentUploadedDataUrl && currentUploadedDataUrl.startsWith("data:image/")) {
+    const submitBtn = event.target.querySelector("button[type='submit']");
+    const originalText = submitBtn ? submitBtn.innerText : "Save item";
+    if (submitBtn) submitBtn.innerText = "Saving photo...";
+    try {
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: currentUploadedDataUrl }),
+      });
+      if (uploadRes.ok) {
+        const uploadData = await uploadRes.json();
+        if (uploadData?.url) imageUrl = uploadData.url;
+      }
+    } catch (err) {
+      console.warn("Cloudinary upload failed, using local photo:", err);
+    } finally {
+      if (submitBtn) submitBtn.innerText = originalText;
+    }
+  }
+
   const newItem = {
     id: "item-" + Date.now(),
     title: title || "Garment Item",
@@ -1212,7 +1346,7 @@ function handleFormSubmit(event) {
     color,
     pattern,
     season,
-    image: currentUploadedDataUrl || defaultPlaceholderSvg,
+    image: imageUrl,
   };
 
   wardrobeItems.unshift(newItem);
