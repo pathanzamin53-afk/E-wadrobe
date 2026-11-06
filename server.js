@@ -231,20 +231,42 @@ async function readRequestBody(request) {
   }
 }
 
-async function generateOutfits(request, response, options) {
+function assertSameOrigin(request) {
   const origin = request.headers.origin;
-  if (origin && origin !== `http://${request.headers.host}`) {
+  if (!origin) return;
+
+  const host =
+    request.headers.host || request.headers["x-forwarded-host"];
+  try {
+    const parsedOrigin = new URL(origin);
+    if (
+      !host ||
+      parsedOrigin.host !== host ||
+      !["http:", "https:"].includes(parsedOrigin.protocol)
+    ) {
+      throw new Error("Origin does not match the application host.");
+    }
+  } catch {
     throw new RequestError(403, "Requests must come from this application.");
   }
+}
 
-  const input = validateInput(await readRequestBody(request));
+async function createOutfitSuggestions(
+  payload,
+  {
+    apiKey = process.env.GROQ_API_KEY,
+    model = MODEL,
+    fetchImpl = globalThis.fetch,
+  } = {},
+) {
+  const input = validateInput(payload);
   if (
-    !options.apiKey ||
-    options.apiKey === "replace_with_your_new_groq_api_key"
+    !apiKey ||
+    apiKey === "replace_with_your_new_groq_api_key"
   ) {
     throw new RequestError(
       503,
-      "Add a new GROQ_API_KEY to .env.local, then restart the server.",
+      "GROQ_API_KEY is not configured. Add it to .env.local for local use or to your deployment's environment variables, then restart or redeploy.",
     );
   }
 
@@ -266,16 +288,16 @@ async function generateOutfits(request, response, options) {
 
   let upstream;
   try {
-    upstream = await options.fetchImpl(API_URL, {
+    upstream = await fetchImpl(API_URL, {
       method: "POST",
       redirect: "error",
       signal: controller.signal,
       headers: {
-        Authorization: `Bearer ${options.apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: options.model,
+        model,
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
         reasoning_effort: "low",
@@ -313,7 +335,7 @@ async function generateOutfits(request, response, options) {
     }
     throw new RequestError(
       502,
-      `Groq could not complete the request (HTTP ${upstream.status}). Check the model configured in .env.local.`,
+      `Groq could not complete the request (HTTP ${upstream.status}). Check the model configured for this deployment.`,
     );
   }
 
@@ -355,7 +377,14 @@ async function generateOutfits(request, response, options) {
     );
   }
 
-  sendJson(response, 200, { outfits });
+  return { outfits };
+}
+
+async function generateOutfits(request, response, options) {
+  assertSameOrigin(request);
+  const payload = await readRequestBody(request);
+  const result = await createOutfitSuggestions(payload, options);
+  sendJson(response, 200, result);
 }
 
 async function serveFile(request, response, pathname) {
@@ -440,8 +469,18 @@ function createServer({
     }
 
     const handleRequest =
-      request.method === "POST" && requestUrl.pathname === "/api/outfits"
-        ? generateOutfits(request, response, options)
+      requestUrl.pathname === "/api/outfits"
+        ? request.method === "POST"
+          ? generateOutfits(request, response, options)
+          : Promise.resolve().then(() => {
+              response.writeHead(405, {
+                Allow: "POST",
+                "Cache-Control": "no-store",
+                "Content-Type": "application/json; charset=utf-8",
+                "X-Content-Type-Options": "nosniff",
+              });
+              response.end(JSON.stringify({ error: "Use POST for outfit suggestions." }));
+            })
         : serveFile(request, response, requestUrl.pathname);
 
     handleRequest.catch((error) => {
@@ -479,4 +518,10 @@ if (require.main === module) {
   }
 }
 
-module.exports = { createServer };
+module.exports = {
+  createOutfitSuggestions,
+  createServer,
+  MAX_BODY_BYTES,
+  RequestError,
+  assertSameOrigin,
+};

@@ -920,11 +920,20 @@ async function requestGroqOutfits(availableItems, occasion, localOutfits) {
       }),
     });
 
+    const responseText = await response.text();
     let result;
     try {
-      result = await response.json();
+      result = JSON.parse(responseText);
     } catch {
-      throw new Error("The outfit server returned an invalid response.");
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.toLowerCase().includes("application/json")) {
+        throw new Error(
+          `The deployed site returned a non-JSON response (HTTP ${response.status}). Its /api/outfits serverless function is missing or not deployed. Deploy the E-Wadrobe repo and set GROQ_API_KEY in Vercel Project Settings > Environment Variables, then redeploy.`,
+        );
+      }
+      throw new Error(
+        `The outfit server returned invalid JSON (HTTP ${response.status}). Check the server logs and try again.`,
+      );
     }
 
     if (!response.ok) {

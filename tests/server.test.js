@@ -1,6 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { createServer } = require("../server");
+const { createHandler } = require("../api/outfits");
 
 const validPayload = {
   occasion: "casual",
@@ -59,6 +60,18 @@ function mockedGroq(outfits, captureRequest) {
       }),
       { status: 200, headers: { "Content-Type": "application/json" } },
     );
+  };
+}
+
+function createMockResponse() {
+  return {
+    headers: {},
+    setHeader(name, value) {
+      this.headers[name.toLowerCase()] = value;
+    },
+    end(body) {
+      this.body = body;
+    },
   };
 }
 
@@ -201,4 +214,77 @@ test("reports a missing API key without exposing a placeholder as a secret", asy
       assert.match((await response.json()).error, /GROQ_API_KEY/);
     },
   );
+});
+
+test("serves the Vercel outfit API as JSON on an HTTPS deployment origin", async () => {
+  const outfits = [
+    {
+      itemIds: ["top-1", "bottom-1"],
+      reason: "A tee and dark denim make an easy everyday combination.",
+    },
+  ];
+  const handler = createHandler({
+    apiKey: "test-secret",
+    model: "test-model",
+    fetchImpl: mockedGroq(outfits),
+  });
+  const response = createMockResponse();
+
+  await handler(
+    {
+      method: "POST",
+      headers: {
+        host: "wardrobe.example",
+        origin: "https://wardrobe.example",
+        "content-type": "application/json",
+      },
+      body: validPayload,
+    },
+    response,
+  );
+
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(JSON.parse(response.body), { outfits });
+  assert.equal(response.headers["content-type"], "application/json; charset=utf-8");
+  assert.equal(response.headers["cache-control"], "no-store");
+});
+
+test("Vercel outfit API returns JSON errors for methods, origins, and missing keys", async () => {
+  const handler = createHandler({
+    apiKey: "",
+    fetchImpl: async () => {
+      throw new Error("Groq should not be called");
+    },
+  });
+  const baseRequest = {
+    headers: {
+      host: "wardrobe.example",
+      origin: "https://wardrobe.example",
+      "content-type": "application/json",
+    },
+    body: validPayload,
+  };
+
+  const wrongMethod = createMockResponse();
+  await handler({ ...baseRequest, method: "GET" }, wrongMethod);
+  assert.equal(wrongMethod.statusCode, 405);
+  assert.equal(wrongMethod.headers.allow, "POST");
+  assert.match(wrongMethod.headers["content-type"], /application\/json/);
+
+  const wrongOrigin = createMockResponse();
+  await handler(
+    {
+      ...baseRequest,
+      method: "POST",
+      headers: { ...baseRequest.headers, origin: "https://other.example" },
+    },
+    wrongOrigin,
+  );
+  assert.equal(wrongOrigin.statusCode, 403);
+  assert.match(JSON.parse(wrongOrigin.body).error, /this application/);
+
+  const missingKey = createMockResponse();
+  await handler({ ...baseRequest, method: "POST" }, missingKey);
+  assert.equal(missingKey.statusCode, 503);
+  assert.match(JSON.parse(missingKey.body).error, /GROQ_API_KEY/);
 });
