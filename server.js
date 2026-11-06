@@ -232,11 +232,17 @@ async function readRequestBody(request) {
 }
 
 function assertSameOrigin(request) {
-  const origin = request.headers.origin;
+  const getHeader = (name) =>
+    typeof request.headers?.get === "function"
+      ? request.headers.get(name)
+      : request.headers?.[name.toLowerCase()];
+  const origin = getHeader("origin");
   if (!origin) return;
 
   const host =
-    request.headers.host || request.headers["x-forwarded-host"];
+    getHeader("host") ||
+    getHeader("x-forwarded-host") ||
+    (request.url ? new URL(request.url).host : null);
   try {
     const parsedOrigin = new URL(origin);
     if (

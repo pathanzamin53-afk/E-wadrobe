@@ -927,8 +927,18 @@ async function requestGroqOutfits(availableItems, occasion, localOutfits) {
     } catch {
       const contentType = response.headers.get("content-type") || "";
       if (!contentType.toLowerCase().includes("application/json")) {
+        if (response.status === 405) {
+          throw new Error(
+            "The hosting platform rejected POST to /api/outfits (HTTP 405). Redeploy the latest E-Wadrobe commit so its POST serverless function is active.",
+          );
+        }
+        if (response.status === 404) {
+          throw new Error(
+            "The deployed site could not find /api/outfits (HTTP 404). Deploy the latest E-Wadrobe commit so its serverless function is included.",
+          );
+        }
         throw new Error(
-          `The deployed site returned a non-JSON response (HTTP ${response.status}). Its /api/outfits serverless function is missing or not deployed. Deploy the E-Wadrobe repo and set GROQ_API_KEY in Vercel Project Settings > Environment Variables, then redeploy.`,
+          `The deployed site returned an HTML error page instead of JSON (HTTP ${response.status}). Check the /api/outfits function logs in Vercel.`,
         );
       }
       throw new Error(
