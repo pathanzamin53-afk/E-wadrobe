@@ -795,12 +795,13 @@ function setAIGeneratorLoading(isLoading) {
 function runAIGenerator() {
   if (document.getElementById("generate-btn").disabled) return;
   const selectedOccasion = document.getElementById("ai-occasion-select").value;
+  const selectedSeason = document.getElementById("ai-season-select").value;
 
   const seasonItems = wardrobeItems.filter(
     (item) =>
-      currentSeasonFilter === "all" ||
+      selectedSeason === "all" ||
       item.season === "all" ||
-      item.season === currentSeasonFilter,
+      item.season === selectedSeason,
   );
 
   const isFormalReady = (item) => {
@@ -836,12 +837,19 @@ function runAIGenerator() {
   const layerings = availableItems.filter((i) => i.category === "layering");
 
   if (tops.length === 0 || bottoms.length === 0) {
-    alert(
-      selectedOccasion === "formal"
-        ? "No formal-ready Top and Bottom found. Add items such as a shirt and chinos, or choose another occasion."
-        : "Please add at least 1 Top and 1 Bottom to generate outfit combinations.",
+    const emptySeasonMessage =
+      selectedSeason !== "all"
+        ? `No ${selectedSeason} outfit has a suitable top and bottom. Add items for that season or choose All seasons.`
+        : selectedOccasion === "formal"
+          ? "No formal-ready Top and Bottom found. Add items such as a shirt and chinos, or choose another occasion."
+          : "Please add at least 1 Top and 1 Bottom to generate outfit combinations.";
+    alert(emptySeasonMessage);
+    setAIGeneratorStatus(
+      selectedSeason === "all"
+        ? "Add at least one top and one bottom to get outfit ideas."
+        : `Add a ${selectedSeason} top and bottom, or choose Any season.`,
+      true,
     );
-    setAIGeneratorStatus("Add at least one top and one bottom to get outfit ideas.", true);
     return;
   }
 
@@ -894,29 +902,37 @@ function runAIGenerator() {
 
   const localOutfits = chooseDiverseOutfits(candidates);
   renderTopOutfits(localOutfits, selectedOccasion, "local");
-  requestGroqOutfits(availableItems, selectedOccasion, localOutfits);
+  requestGroqOutfits(
+    availableItems,
+    selectedOccasion,
+    selectedSeason,
+    localOutfits,
+  );
 }
 
-async function requestGroqOutfits(availableItems, occasion, localOutfits) {
+async function requestGroqOutfits(availableItems, occasion, season, localOutfits) {
   try {
     const response = await fetch("/api/outfits", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         occasion,
+        season,
         profile: {
           style: userProfile.style,
           colors: userProfile.colors,
           avoid: userProfile.avoid,
         },
-        items: availableItems.map(({ id, title, category, color, pattern, season }) => ({
-          id,
-          title,
-          category,
-          color,
-          pattern,
-          season,
-        })),
+        items: availableItems.map(
+          ({ id, title, category, color, pattern, season }) => ({
+            id,
+            title,
+            category,
+            color,
+            pattern,
+            season,
+          }),
+        ),
       }),
     });
 
@@ -980,7 +996,13 @@ async function requestGroqOutfits(availableItems, occasion, localOutfits) {
       if (
         categories.filter((category) => category === "top").length !== 1 ||
         categories.filter((category) => category === "bottom").length !== 1 ||
-        new Set(categories).size !== categories.length
+        new Set(categories).size !== categories.length ||
+        items.some(
+          (item) =>
+            season !== "all" &&
+            item.season !== "all" &&
+            item.season !== season,
+        )
       ) {
         throw new Error("The outfit server returned an invalid outfit combination.");
       }
@@ -999,7 +1021,13 @@ async function requestGroqOutfits(availableItems, occasion, localOutfits) {
     });
 
     renderTopOutfits(aiOutfits, occasion, "groq");
-    setAIGeneratorStatus("Groq picked these combinations from your wardrobe.");
+    const seasonLabel = {
+      all: "any season",
+      summer: "summer",
+      winter: "winter",
+      rainy: "the rainy season",
+    }[season];
+    setAIGeneratorStatus(`Groq picked these combinations for ${seasonLabel}.`);
   } catch (error) {
     console.error("Could not generate Groq outfit suggestions.", error);
     renderTopOutfits(localOutfits, occasion, "local");

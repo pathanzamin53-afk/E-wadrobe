@@ -4,6 +4,7 @@ const { createServer } = require("../server");
 
 const validPayload = {
   occasion: "casual",
+  season: "all",
   profile: {
     style: "minimal",
     colors: "navy, white",
@@ -105,6 +106,68 @@ test("validates request data before calling Groq", async () => {
       assert.equal(response.status, 400);
       assert.match((await response.json()).error, /one top and one bottom/);
       assert.equal(called, false);
+    },
+  );
+});
+
+test("validates the requested season and only accepts matching outfit items", async () => {
+  let called = false;
+  await withServer(
+    {
+      apiKey: "test-secret",
+      fetchImpl: async (url, options) => {
+        called = true;
+        const request = JSON.parse(options.body);
+        assert.match(request.messages[0].content, /"season":"winter"/);
+        return mockedGroq([
+          {
+            itemIds: ["top-1", "bottom-1"],
+            reason: "A tee and dark denim make an easy everyday combination.",
+          },
+        ])(url, options);
+      },
+    },
+    async (baseUrl) => {
+      const mismatched = await fetch(`${baseUrl}/api/outfits`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...validPayload, season: "winter" }),
+      });
+      assert.equal(mismatched.status, 502);
+      assert.match((await mismatched.json()).error, /did not match your wardrobe/);
+      assert.equal(called, true);
+
+      const invalid = await fetch(`${baseUrl}/api/outfits`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...validPayload, season: "monsoon" }),
+      });
+      assert.equal(invalid.status, 400);
+      assert.match((await invalid.json()).error, /valid outfit season/);
+    },
+  );
+});
+
+test("allows all-season pieces in requested summer outfit suggestions", async () => {
+  const outfits = [
+    {
+      itemIds: ["top-1", "bottom-1"],
+      reason: "A summer tee and versatile denim make an easy warm-weather look.",
+    },
+  ];
+  await withServer(
+    {
+      apiKey: "test-secret",
+      fetchImpl: mockedGroq(outfits),
+    },
+    async (baseUrl) => {
+      const response = await fetch(`${baseUrl}/api/outfits`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...validPayload, season: "summer" }),
+      });
+      assert.equal(response.status, 200);
+      assert.deepEqual(await response.json(), { outfits });
     },
   );
 });
