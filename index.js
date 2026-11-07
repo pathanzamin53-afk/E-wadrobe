@@ -117,6 +117,29 @@ window.addEventListener("DOMContentLoaded", () => {
       closeProfileModal();
     }
   });
+
+  const dropZone = document.getElementById("drop-zone");
+  if (dropZone) {
+    ["dragenter", "dragover"].forEach((name) => {
+      dropZone.addEventListener(name, (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = "var(--green)";
+      });
+    });
+    ["dragleave", "drop"].forEach((name) => {
+      dropZone.addEventListener(name, (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = "";
+      });
+    });
+    dropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      const files = e.dataTransfer?.files;
+      if (files && files.length) {
+        previewSelectedImage({ target: { files } });
+      }
+    });
+  }
 });
 
 function loadProfile() {
@@ -235,7 +258,22 @@ function loadSavedWardrobe() {
 }
 
 function saveWardrobeToStorage() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(wardrobeItems));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(wardrobeItems));
+  } catch (err) {
+    console.warn("Storage quota exceeded, preserving wardrobe items:", err);
+    try {
+      const safeItems = wardrobeItems.map((item) => {
+        if (typeof item.image === "string" && item.image.startsWith("data:image/") && item.image.length > 50000) {
+          return { ...item, image: "" };
+        }
+        return item;
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(safeItems));
+    } catch (e) {
+      console.error("Storage completely full:", e);
+    }
+  }
   updateBadgeCounts();
   drawColorWheel();
 }
@@ -1217,23 +1255,57 @@ async function previewSelectedImage(event) {
 
     for (let i = 0; i < files.length; i++) {
       if (statusText) {
-        statusText.innerText = `AI categorizing photo ${i + 1} of ${files.length}...`;
+        statusText.innerText = `Processing photo ${i + 1} of ${files.length}...`;
       }
       try {
         const compressed = await compressImage(files[i], 512, 0.75);
-        const res = await fetch("/api/analyze-item", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ image: compressed }),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.title) {
-            wardrobeItems.unshift(data);
+        let itemAdded = false;
+
+        try {
+          const res = await fetch("/api/analyze-item", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ image: compressed }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.title) {
+              wardrobeItems.unshift(data);
+              itemAdded = true;
+            }
           }
+        } catch (fetchErr) {
+          console.warn("AI analysis network call failed for photo " + (i + 1), fetchErr);
+        }
+
+        // If AI analysis was not available, save photo with default details
+        if (!itemAdded) {
+          let imageUrl = compressed;
+          try {
+            const upRes = await fetch("/api/upload", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ image: compressed }),
+            });
+            if (upRes.ok) {
+              const upData = await upRes.json();
+              if (upData?.url) imageUrl = upData.url;
+            }
+          } catch (_) {}
+
+          const rawName = files[i].name ? files[i].name.replace(/\.[^/.]+$/, "") : "Piece " + (i + 1);
+          wardrobeItems.unshift({
+            id: "item-" + Date.now() + "-" + i,
+            title: rawName.slice(0, 40),
+            category: "top",
+            color: "#4a5568",
+            pattern: "solid",
+            season: "all",
+            image: imageUrl,
+          });
         }
       } catch (err) {
-        console.error("Batch item analysis error:", err);
+        console.error("Batch item processing error:", err);
       }
     }
 
@@ -1255,6 +1327,12 @@ async function previewSelectedImage(event) {
     document.getElementById("preview-wrapper").classList.remove("hidden");
     extractDominantColor(currentUploadedDataUrl);
 
+    // Default title from file name immediately so form is never blocked
+    const titleInput = document.getElementById("item-title");
+    if (titleInput && !titleInput.value && file.name) {
+      titleInput.value = file.name.replace(/\.[^/.]+$/, "").slice(0, 40);
+    }
+
     if (statusBox) {
       statusBox.classList.remove("hidden");
       statusText.innerText = "AI is detecting garment details...";
@@ -1268,7 +1346,7 @@ async function previewSelectedImage(event) {
         if (r.ok) {
           const item = await r.json();
           if (item) {
-            if (item.title) document.getElementById("item-title").value = item.title;
+            if (item.title && titleInput) titleInput.value = item.title;
             if (item.category) document.getElementById("item-category").value = item.category;
             if (item.color) {
               document.getElementById("item-color").value = item.color;
