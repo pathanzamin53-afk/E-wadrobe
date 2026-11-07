@@ -326,10 +326,15 @@ async function callGemini({ apiKey, model, prompt, fetchImpl, controller }) {
     });
   };
 
+  const delays = [1000, 2000, 3000];
   let response = await sendRequest();
-  if ((response.status === 503 || response.status === 429) && !controller.signal.aborted) {
-    await new Promise((r) => setTimeout(r, 1200));
-    response = await sendRequest();
+  for (const delay of delays) {
+    if ((response.status === 503 || response.status === 429) && !controller.signal.aborted) {
+      await new Promise((r) => setTimeout(r, delay));
+      response = await sendRequest();
+    } else {
+      break;
+    }
   }
 
   if (!response.ok) {
