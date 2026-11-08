@@ -32,7 +32,7 @@
           </div>
           <span class="brand-title">E-Wardrobe</span>
         </a>
-        <span class="nav-stats-pill" title="Total pieces in your wardrobe">
+        <span class="nav-stats-pill" style="display: none;" title="Total pieces in your wardrobe">
           <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
           <span id="saved-count-badge">0 items</span>
         </span>
@@ -302,7 +302,7 @@
       <form id="upload-form" class="sheet-form" onsubmit="handleItemUpload(event)">
         <!-- File Drop Zone -->
         <div id="drop-zone" class="glass-dropzone" role="button" tabindex="0" aria-label="Upload garment photo" onclick="document.getElementById('item-image-file').click()">
-          <input type="file" id="item-image-file" accept="image/*" class="visually-hidden" onchange="previewSelectedImage(event)" aria-label="Choose garment photo file">
+          <input type="file" id="item-image-file" accept="image/*" multiple class="visually-hidden" onchange="previewSelectedImage(event)" aria-label="Choose garment photo files">
           <div id="preview-wrapper" class="preview-wrapper hidden">
             <img id="image-preview" src="#" alt="Garment preview image" class="preview-img">
             <button type="button" onclick="clearSelectedImage(event)" class="glass-icon-btn remove-photo-btn" aria-label="Remove image">
@@ -314,8 +314,8 @@
               <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
             </div>
             <div class="dropzone-text">
-              <span class="prompt-main">Drop photo or tap to browse</span>
-              <span class="prompt-sub">Supports PNG, JPG, WebP</span>
+              <span class="prompt-main">Drop photos or tap to browse</span>
+              <span class="prompt-sub">Select single or multiple photos to batch add</span>
             </div>
           </div>
         </div>
