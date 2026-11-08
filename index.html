@@ -547,7 +547,28 @@
     </div>
   </div>
 
-    <!-- Interactive User Onboarding & Guided App Tour -->
+      <!-- Native iOS Liquid Glass Confirmation Dialog -->
+  <div id="confirm-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
+    <div class="modal-glass-sheet confirm-sheet">
+      <div class="sheet-grabber" aria-hidden="true"></div>
+      <div class="confirm-icon-bubble">
+        <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+      </div>
+      <h2 id="confirm-modal-title" class="confirm-title">Remove Garment?</h2>
+      <p id="confirm-modal-desc" class="confirm-desc">This piece will be permanently removed from your collection.</p>
+      
+      <div class="confirm-actions">
+        <button type="button" id="confirm-action-btn" class="confirm-destructive-btn">
+          <span>Remove</span>
+        </button>
+        <button type="button" onclick="closeConfirmModal()" class="confirm-cancel-btn">
+          <span>Cancel</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive User Onboarding & Guided App Tour -->
   <div id="onboarding-overlay" class="onboarding-overlay hidden" aria-live="polite">
     <div id="onboarding-spotlight" class="onboarding-spotlight"></div>
     <div id="onboarding-card" class="onboarding-glass-card" role="dialog" aria-modal="true"></div>

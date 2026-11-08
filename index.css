@@ -1555,3 +1555,97 @@ html.dark .theme-dark-icon  { display: inline-block; color: #c8a96e; }
 }
 .tour-next-btn:hover { background: var(--accent-mid); }
 .tour-next-btn:active { transform: scale(0.96); }
+
+
+/* ── CONFIRMATION MODAL & ACTION SHEET ─────────────────────────────────── */
+.confirm-sheet {
+  max-width: 330px !important;
+  text-align: center;
+  align-items: center;
+  padding: 18px 20px calc(22px + var(--safe-b)) !important;
+  gap: 8px;
+}
+
+.confirm-icon-bubble {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(194, 94, 94, 0.14);
+  border: 1px solid rgba(194, 94, 94, 0.28);
+  color: var(--danger);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  margin-top: 2px;
+  box-shadow: 0 4px 14px rgba(194, 94, 94, 0.18);
+}
+
+.confirm-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-top: 2px;
+}
+
+.confirm-desc {
+  font-size: 0.80rem;
+  line-height: 1.45;
+  color: var(--ink-3);
+  max-width: 260px;
+}
+
+.confirm-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  width: 100%;
+  margin-top: 6px;
+}
+
+.confirm-destructive-btn {
+  width: 100%;
+  height: 42px;
+  border-radius: var(--r-md);
+  background: var(--danger);
+  color: #fff;
+  font-size: 0.86rem;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.20);
+  box-shadow: 0 4px 16px rgba(194, 94, 94, 0.35);
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.confirm-destructive-btn:hover {
+  background: #a04646;
+}
+.confirm-destructive-btn:active {
+  transform: scale(0.96);
+}
+
+.confirm-cancel-btn {
+  width: 100%;
+  height: 40px;
+  border-radius: var(--r-md);
+  background: var(--glass-input);
+  border: 1px solid var(--border-mid);
+  color: var(--ink-2);
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.confirm-cancel-btn:hover {
+  background: var(--glass-high);
+  color: var(--ink);
+}
+.confirm-cancel-btn:active {
+  transform: scale(0.96);
+}

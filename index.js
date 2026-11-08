@@ -259,6 +259,7 @@ window.addEventListener("DOMContentLoaded", () => {
       if (modal.id === "upload-modal") closeUploadModal();
       if (modal.id === "profile-modal") closeProfileModal();
       if (modal.id === "auth-benefits-modal") closeAuthBenefitsModal();
+      if (modal.id === "confirm-modal") closeConfirmModal();
     });
   });
   document.addEventListener("keydown", (event) => {
@@ -1971,4 +1972,48 @@ function finishOnboarding() {
   if (typeof switchTab === "function") {
     switchTab("closet");
   }
+}
+
+
+/* ==========================================================================
+   CONFIRMATION DIALOG MANAGER (LIQUID GLASS ACTION SHEET)
+   ========================================================================== */
+let pendingConfirmCallback = null;
+
+function showConfirmDialog(options) {
+  const title = options.title || "Remove Garment?";
+  const description = options.description || "This piece will be removed from your collection.";
+  const confirmLabel = options.confirmLabel || "Remove";
+  const onConfirm = options.onConfirm || null;
+
+  const modal = document.getElementById("confirm-modal");
+  const titleEl = document.getElementById("confirm-modal-title");
+  const descEl = document.getElementById("confirm-modal-desc");
+  const actionBtn = document.getElementById("confirm-action-btn");
+
+  if (!modal || !actionBtn) {
+    if (typeof onConfirm === "function") onConfirm();
+    return;
+  }
+
+  if (titleEl) titleEl.innerText = title;
+  if (descEl) descEl.innerText = description;
+  const labelSpan = actionBtn.querySelector("span");
+  if (labelSpan) labelSpan.innerText = confirmLabel;
+
+  pendingConfirmCallback = onConfirm;
+
+  actionBtn.onclick = function() {
+    const cb = pendingConfirmCallback;
+    closeConfirmModal();
+    if (typeof cb === "function") cb();
+  };
+
+  modal.classList.remove("hidden");
+}
+
+function closeConfirmModal() {
+  const modal = document.getElementById("confirm-modal");
+  if (modal) modal.classList.add("hidden");
+  pendingConfirmCallback = null;
 }
