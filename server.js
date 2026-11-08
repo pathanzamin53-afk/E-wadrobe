@@ -596,30 +596,49 @@ Return a JSON object with:
 Return ONLY the raw JSON object.`;
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-  const response = await fetchImpl(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{
-        parts: [
-          {
-            inline_data: {
-              mime_type: mimeType,
-              data: pureBase64,
+  const delays = [1000, 2000, 3000];
+  let response;
+
+  for (let attempt = 0; attempt <= delays.length; attempt++) {
+    response = await fetchImpl(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            {
+              inline_data: {
+                mime_type: mimeType,
+                data: pureBase64,
+              },
             },
-          },
-          { text: prompt },
-        ],
-      }],
-      generationConfig: {
-        responseMimeType: "application/json",
-        temperature: 0.2,
-      },
-    }),
-  });
+            { text: prompt },
+          ],
+        }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          temperature: 0.2,
+        },
+      }),
+    });
+
+    if (response.ok) break;
+
+    if ((response.status === 503 || response.status === 429) && attempt < delays.length) {
+      await new Promise((r) => setTimeout(r, delays[attempt]));
+      continue;
+    }
+    break;
+  }
 
   if (!response.ok) {
     const errorBody = await response.text().catch(() => "");
+    if (response.status === 429) {
+      throw new RequestError(429, "Gemini rate limit reached. Please wait a moment.");
+    }
+    if (response.status === 503) {
+      throw new RequestError(503, "Gemini servers are temporarily busy.");
+    }
     throw new RequestError(502, `Gemini analysis failed (HTTP ${response.status}): ${errorBody}`);
   }
 
@@ -629,9 +648,13 @@ Return ONLY the raw JSON object.`;
     throw new RequestError(502, "Gemini returned empty analysis.");
   }
 
+  let cleanText = rawText.trim();
+  const fenceMatch = cleanText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  if (fenceMatch) cleanText = fenceMatch[1].trim();
+
   let parsed;
   try {
-    parsed = JSON.parse(rawText);
+    parsed = JSON.parse(cleanText);
   } catch {
     throw new RequestError(502, "Gemini returned non-JSON analysis.");
   }

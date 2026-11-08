@@ -1,3 +1,11 @@
+function guessCategoryFromFilename(filename) {
+  const name = String(filename || "").toLowerCase();
+  if (/\b(jeans?|pants?|trousers?|shorts?|skirt|leggings?|chinos?|cargos?|bottoms?)\b/.test(name)) return "bottom";
+  if (/\b(jacket|coat|hoodie|cardigan|blazer|sweater|vest|outerwear|windbreaker)\b/.test(name)) return "layering";
+  if (/\b(shoes?|sneakers?|boots?|loafers?|heels?|sandals?|footwear|kicks)\b/.test(name)) return "shoes";
+  if (/\b(cap|hat|beanie|beret|bucket\s*hat)\b/.test(name)) return "cap";
+  return "top";
+}
 /* ==========================================================================
        1. INITIALIZATION & STATE MANAGEMENT (LOCAL STORAGE PERSISTENCE)
        ========================================================================== */
@@ -1294,10 +1302,11 @@ async function previewSelectedImage(event) {
           } catch (_) {}
 
           const rawName = files[i].name ? files[i].name.replace(/\.[^/.]+$/, "") : "Piece " + (i + 1);
+          const guessedCat = guessCategoryFromFilename(files[i].name);
           wardrobeItems.unshift({
             id: "item-" + Date.now() + "-" + i,
             title: rawName.slice(0, 40),
-            category: "top",
+            category: guessedCat,
             color: "#4a5568",
             pattern: "solid",
             season: "all",
@@ -1306,6 +1315,9 @@ async function previewSelectedImage(event) {
         }
       } catch (err) {
         console.error("Batch item processing error:", err);
+      }
+      if (i < files.length - 1) {
+        await new Promise((r) => setTimeout(r, 600));
       }
     }
 
@@ -1337,6 +1349,12 @@ async function previewSelectedImage(event) {
       statusBox.classList.remove("hidden");
       statusText.innerText = "AI is detecting garment details...";
     }
+    // Guess category from filename as immediate fallback
+    const categorySelect = document.getElementById("item-category");
+    if (categorySelect && file.name) {
+      categorySelect.value = guessCategoryFromFilename(file.name);
+    }
+
     fetch("/api/analyze-item", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1347,7 +1365,7 @@ async function previewSelectedImage(event) {
           const item = await r.json();
           if (item) {
             if (item.title && titleInput) titleInput.value = item.title;
-            if (item.category) document.getElementById("item-category").value = item.category;
+            if (item.category && categorySelect) categorySelect.value = item.category;
             if (item.color) {
               document.getElementById("item-color").value = item.color;
               document.getElementById("color-hex-text").innerText = item.color;
@@ -1355,12 +1373,22 @@ async function previewSelectedImage(event) {
             if (item.pattern) document.getElementById("item-pattern").value = item.pattern;
             if (item.season) document.getElementById("item-season").value = item.season;
             if (item.image) currentUploadedDataUrl = item.image;
+            if (statusText) statusText.innerText = "Categorized as: " + item.category + " (" + (item.title || "") + ")";
           }
+        } else {
+          const errData = await r.json().catch(() => ({}));
+          const errMsg = errData.error || ("HTTP " + r.status);
+          if (statusText) statusText.innerText = "AI categorization: " + errMsg;
         }
       })
-      .catch((e) => console.warn("Auto-tagging error:", e))
+      .catch((e) => {
+        if (statusText) statusText.innerText = "Server offline. Open http://127.0.0.1:3000 to use AI.";
+        console.warn("Auto-tagging error:", e);
+      })
       .finally(() => {
-        if (statusBox) statusBox.classList.add("hidden");
+        setTimeout(() => {
+          if (statusBox) statusBox.classList.add("hidden");
+        }, 3500);
       });
   } catch (err) {
     console.error("Image preview/compression failed:", err);
