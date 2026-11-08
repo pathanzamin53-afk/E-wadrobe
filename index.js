@@ -22,26 +22,28 @@ function handleClerkSignIn() {
 async function triggerClerkSignIn() {
   const mountTarget = document.getElementById("clerk-sign-in-mount");
   if (mountTarget) {
-    mountTarget.innerHTML = '<div style="padding: 24px; color: var(--muted); font-size: 0.95rem; text-align: center;"><i class="fa-solid fa-spinner fa-spin" style="margin-right: 8px;"></i> Loading sign in...</div>';
+    mountTarget.innerHTML = '<div style="padding: 16px; color: var(--muted); font-size: 0.9rem; text-align: center;"><i class="fa-solid fa-spinner fa-spin" style="margin-right: 8px; color: var(--accent);"></i> Connecting to authentication...</div>';
   }
 
-  const clerk = await getClerkInstance();
-  if (clerk) {
-    if (mountTarget) {
-      mountTarget.innerHTML = "";
-      try {
-        clerk.mountSignIn(mountTarget);
-        return;
-      } catch (err) {
-        console.warn("mountSignIn fallback to openSignIn:", err);
-      }
-    }
-    try {
-      clerk.openSignIn();
+  try {
+    const clerk = await getClerkInstance();
+    if (clerk) {
       closeAuthBenefitsModal();
-    } catch (e) {
-      console.error("Clerk openSignIn error:", e);
+      if (typeof clerk.openSignIn === "function") {
+        clerk.openSignIn();
+      } else if (mountTarget && typeof clerk.mountSignIn === "function") {
+        openAuthBenefitsModal();
+        mountTarget.innerHTML = "";
+        clerk.mountSignIn(mountTarget);
+      }
+      return;
     }
+  } catch (err) {
+    console.error("Clerk trigger error:", err);
+  }
+
+  if (mountTarget) {
+    mountTarget.innerHTML = '<div style="padding: 12px; font-size: 0.85rem; color: #ef4444; text-align: center;"><i class="fa-solid fa-triangle-exclamation" style="margin-right: 6px;"></i> Unable to load sign-in. Check internet connection and retry.</div><button type="button" onclick="triggerClerkSignIn()" class="button button-primary" style="width: 100%; justify-content: center; margin-top: 10px;">Retry Sign In</button>';
   }
 }
 
@@ -249,11 +251,13 @@ window.addEventListener("DOMContentLoaded", () => {
   loadProfile();
   initTheme();
   drawColorWheel();
+  initClerk();
   document.querySelectorAll(".modal-backdrop").forEach((modal) => {
     modal.addEventListener("click", (event) => {
       if (event.target !== modal) return;
       if (modal.id === "upload-modal") closeUploadModal();
       if (modal.id === "profile-modal") closeProfileModal();
+      if (modal.id === "auth-benefits-modal") closeAuthBenefitsModal();
     });
   });
   document.addEventListener("keydown", (event) => {
@@ -265,6 +269,11 @@ window.addEventListener("DOMContentLoaded", () => {
       !document.getElementById("profile-modal").classList.contains("hidden")
     ) {
       closeProfileModal();
+    }
+    if (
+      !document.getElementById("auth-benefits-modal").classList.contains("hidden")
+    ) {
+      closeAuthBenefitsModal();
     }
   });
 
@@ -1677,24 +1686,46 @@ function importWardrobeData(event) {
        ========================================================================== */
 function initTheme() {
   const themeToggleBtn = document.getElementById("theme-toggle");
-  if (
-    window.matchMedia &&
-    window.matchMedia("(prefers-color-scheme: dark)").matches
-  ) {
+  const savedTheme = localStorage.getItem("e_wardrobe_theme");
+  const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+  if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
     document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
   }
-  themeToggleBtn.setAttribute(
-    "aria-pressed",
-    String(document.documentElement.classList.contains("dark")),
-  );
-  themeToggleBtn.addEventListener("click", () => {
-    document.documentElement.classList.toggle("dark");
+
+  if (themeToggleBtn) {
     themeToggleBtn.setAttribute(
       "aria-pressed",
       String(document.documentElement.classList.contains("dark")),
     );
-    drawColorWheel();
+    themeToggleBtn.addEventListener("click", () => {
+      const isDark = document.documentElement.classList.toggle("dark");
+      localStorage.setItem("e_wardrobe_theme", isDark ? "dark" : "light");
+      themeToggleBtn.setAttribute("aria-pressed", String(isDark));
+      if (typeof drawColorWheel === "function") {
+        drawColorWheel();
+      }
+    });
+  }
+}
+
+function scrollToSection(id) {
+  const target = document.getElementById(id);
+  if (!target) return;
+  const navOffset = 76;
+  const targetTop = target.getBoundingClientRect().top + window.pageYOffset - navOffset;
+  window.scrollTo({
+    top: Math.max(0, targetTop),
+    behavior: "smooth"
   });
+
+  document.querySelectorAll(".dock-item").forEach((item) => {
+    item.classList.remove("active");
+  });
+  const activeBtn = document.querySelector(`.dock-item[onclick*="${id}"]`);
+  if (activeBtn) activeBtn.classList.add("active");
 }
 
 document.getElementById("item-color").addEventListener("input", (e) => {

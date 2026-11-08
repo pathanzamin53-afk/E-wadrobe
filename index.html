@@ -2,13 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f5f4ef">
-  <meta name="description" content="Keep track of your wardrobe and build outfit combinations from the clothes you own.">
-  <title>E-Wardrobe — Your wardrobe, considered</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#faf9f6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0c0e0d" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="A considered personal wardrobe and AI stylist. Catalog your clothes and discover fresh combinations from pieces you own.">
+  <title>E-Wardrobe — A wardrobe, considered</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <script async crossorigin="anonymous" data-clerk-publishable-key="pk_test_ZXhhY3Qtd2FzcC02NjAyLmNsZXJrLmFjY291bnRzLmRldiQ" src="https://exact-wasp-6602.clerk.accounts.dev/npm/@clerk/clerk-js@5/dist/clerk.browser.js" type="text/javascript"></script>
   <link rel="stylesheet" href="index.css">
@@ -21,12 +22,12 @@
         <img src="Favicon.png" alt="" class="brand-mark">
         <span class="brand-copy">
           <span class="brand-name">E-Wardrobe</span>
-          <span class="brand-caption">A wardrobe, well kept</span>
+          <span class="brand-caption">Considered</span>
         </span>
       </a>
 
       <div class="header-actions">
-        <span class="saved-count" title="Saved in this browser">
+        <span class="saved-count" title="Total saved pieces">
           <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
           <span id="saved-count-badge">0 items</span>
         </span>
@@ -56,7 +57,7 @@
         </button>
         <button type="button" onclick="openUploadModal()" class="button button-primary add-button" aria-label="Add wardrobe item">
           <i class="fa-solid fa-plus" aria-hidden="true"></i>
-          <span>Add item</span>
+          <span>Add piece</span>
         </button>
       </div>
     </div>
@@ -65,14 +66,13 @@
   <main class="page-shell">
     <section class="page-intro" aria-labelledby="page-title">
       <div class="intro-masthead">
-        <h1 id="page-title">Your wardrobe, in good order.</h1>
-        <p class="intro-copy">Catalog your garments and discover considered outfit combinations from pieces you already own.</p>
+        <h1 id="page-title">A wardrobe, considered.</h1>
+        <p class="intro-copy">Every piece in your closet, styled without the morning friction. Pair what you own into looks that work.</p>
       </div>
     </section>
 
     <section class="season-toolbar" aria-labelledby="season-title">
       <div class="toolbar-heading">
-        
         <h2 id="season-title">By season</h2>
       </div>
       <div class="season-filters" role="group" aria-label="Filter wardrobe by season">
@@ -92,49 +92,46 @@
     </section>
 
     <div class="content-grid">
-      <section class="catalog-section" aria-labelledby="closet-title">
+      <section class="catalog-section" id="closet-section" aria-labelledby="closet-title">
         <div class="catalog-heading">
-          <div>
-            
-            <div class="title-with-count">
-              <h2 id="closet-title">The closet</h2>
-              <span id="items-count-tag" class="item-count">0</span>
-            </div>
+          <div class="title-with-count">
+            <h2 id="closet-title">The collection</h2>
+            <span id="items-count-tag" class="item-count">0</span>
           </div>
           <button type="button" onclick="resetToDefaultData()" class="text-button">
             <i class="fa-solid fa-arrow-rotate-left" aria-hidden="true"></i>
-            <span>Restore sample items</span>
+            <span>Reset pieces</span>
           </button>
         </div>
 
         <div class="category-filters" role="group" aria-label="Filter wardrobe by category">
           <button type="button" onclick="setCategoryFilter('all')" id="cat-btn-all" class="cat-filter-btn is-active" aria-pressed="true">All</button>
-          <button type="button" onclick="setCategoryFilter('cap')" id="cat-btn-cap" class="cat-filter-btn" aria-pressed="false">Headwear</button>
           <button type="button" onclick="setCategoryFilter('top')" id="cat-btn-top" class="cat-filter-btn" aria-pressed="false">Tops</button>
           <button type="button" onclick="setCategoryFilter('bottom')" id="cat-btn-bottom" class="cat-filter-btn" aria-pressed="false">Bottoms</button>
           <button type="button" onclick="setCategoryFilter('shoes')" id="cat-btn-shoes" class="cat-filter-btn" aria-pressed="false">Shoes</button>
           <button type="button" onclick="setCategoryFilter('layering')" id="cat-btn-layering" class="cat-filter-btn" aria-pressed="false">Layers</button>
+          <button type="button" onclick="setCategoryFilter('cap')" id="cat-btn-cap" class="cat-filter-btn" aria-pressed="false">Headwear</button>
         </div>
 
         <div id="wardrobe-grid" class="wardrobe-grid" aria-live="polite"></div>
       </section>
 
-      <aside class="styling-column" aria-label="Outfit suggestions">
+      <aside class="styling-column" id="stylist-section" aria-label="Outfit suggestions">
         <section class="stylist-card" aria-labelledby="stylist-title">
           <div class="stylist-card-top">
             <span class="stylist-symbol" aria-hidden="true"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
-            <span class="stylist-label">Outfit builder</span>
+            <span class="stylist-label">AI Stylist</span>
           </div>
-          <h2 id="stylist-title">Find a look<br>for the day.</h2>
-          <p class="stylist-description">See combinations from your closet, ranked by color, occasion, pattern and season.</p>
+          <h2 id="stylist-title">Find a look for the day.</h2>
+          <p class="stylist-description">Curated pairings built strictly from pieces you already own, ranked by color harmony and occasion.</p>
 
           <div class="occasion-field">
-            <label for="ai-occasion-select">The occasion</label>
+            <label for="ai-occasion-select">Occasion</label>
             <select id="ai-occasion-select" class="form-control">
-              <option value="casual">Everyday</option>
+              <option value="casual">Everyday Casual</option>
               <option value="streetwear">Streetwear</option>
-              <option value="formal">Work &amp; formal</option>
-              <option value="sporty">Sport &amp; active</option>
+              <option value="formal">Work &amp; Formal</option>
+              <option value="sporty">Sport &amp; Active</option>
               <option value="party">Evening &amp; Party</option>
               <option value="wedding">Wedding &amp; Traditional</option>
               <option value="date">Date Night</option>
@@ -142,9 +139,9 @@
           </div>
 
           <div class="occasion-field">
-            <label for="ai-season-select">Outfit season</label>
+            <label for="ai-season-select">Season</label>
             <select id="ai-season-select" class="form-control">
-              <option value="all">All seasons</option>
+              <option value="all">Any season</option>
               <option value="summer">Summer</option>
               <option value="winter">Winter</option>
               <option value="rainy">Rainy</option>
@@ -155,32 +152,26 @@
             <span>Suggest outfits</span>
             <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
           </button>
-          <p class="privacy-note"><i class="fa-solid fa-lock" aria-hidden="true"></i> AI analyzes your wardrobe combinations based on your pieces and style preferences.</p>
+          <p class="privacy-note"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Stylist evaluates your actual closet items and saved style profile.</p>
           <p id="ai-status" class="ai-status" role="status" aria-live="polite"></p>
         </section>
 
         <section class="recommendations-section" aria-labelledby="recommendations-title">
           <div class="section-heading-row">
-            <div>
-              
-              <h2 id="recommendations-title">Outfit ideas</h2>
-            </div>
-            <span id="combos-found-tag" class="results-count">Not generated</span>
+            <h2 id="recommendations-title">Suggested looks</h2>
+            <span id="combos-found-tag" class="results-count">Ready</span>
           </div>
           <div id="ai-outfits-container" class="outfits-container" aria-live="polite">
             <div class="empty-outfits">
               <span class="empty-outfits-icon" aria-hidden="true"><i class="fa-regular fa-compass"></i></span>
-              <p>Choose an occasion above to see combinations from your wardrobe.</p>
+              <p>Pick an occasion above and tap "Suggest outfits" to generate personalized combinations.</p>
             </div>
           </div>
         </section>
 
-        <section class="palette-card" aria-labelledby="palette-title">
+        <section class="palette-card" id="palette-section" aria-labelledby="palette-title">
           <div class="palette-heading">
-            <div>
-              
-              <h2 id="palette-title">Your color palette</h2>
-            </div>
+            <h2 id="palette-title">Wardrobe tones</h2>
             <i class="fa-solid fa-circle-half-stroke palette-icon" aria-hidden="true"></i>
           </div>
           <div class="palette-content">
@@ -191,7 +182,7 @@
                 <strong id="harmony-diversity-score">Balanced</strong>
               </div>
               <div class="palette-stat">
-                <span>Most common tone</span>
+                <span>Dominant tone</span>
                 <strong id="harmony-dominant-tone">Neutral</strong>
               </div>
               <div class="palette-meter" aria-hidden="true"><span id="harmony-bar-fill"></span></div>
@@ -202,36 +193,58 @@
     </div>
   </main>
 
+  <!-- Mobile Floating Action Dock (320px - 767px) -->
+  <nav class="mobile-dock" id="mobile-dock" aria-label="Mobile navigation">
+    <button type="button" class="dock-item is-active" onclick="scrollToSection('closet-section')" aria-label="View collection">
+      <i class="fa-solid fa-shirt"></i>
+      <span>Closet</span>
+    </button>
+    <button type="button" class="dock-item" onclick="scrollToSection('stylist-section')" aria-label="AI Stylist">
+      <i class="fa-solid fa-wand-magic-sparkles"></i>
+      <span>Stylist</span>
+    </button>
+    <button type="button" class="dock-item dock-add-btn" onclick="openUploadModal()" aria-label="Add new garment">
+      <i class="fa-solid fa-plus"></i>
+    </button>
+    <button type="button" class="dock-item" onclick="scrollToSection('palette-section')" aria-label="Color palette">
+      <i class="fa-solid fa-circle-half-stroke"></i>
+      <span>Tones</span>
+    </button>
+    <button type="button" class="dock-item" onclick="openProfileModal()" aria-label="Style profile">
+      <i class="fa-regular fa-user"></i>
+      <span>Profile</span>
+    </button>
+  </nav>
+
+  <!-- Upload Piece Modal (Bottom Sheet on Mobile) -->
   <div id="upload-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="upload-modal-title">
     <div class="modal-card" id="modal-container">
+      <div class="sheet-grabber" aria-hidden="true"></div>
       <div class="modal-header">
-        <div>
-          
-          <h2 id="upload-modal-title">Add a piece</h2>
-        </div>
-        <button type="button" onclick="closeUploadModal()" class="icon-button modal-close" aria-label="Close add item dialog">
+        <h2 id="upload-modal-title">Add a piece</h2>
+        <button type="button" onclick="closeUploadModal()" class="icon-button modal-close" aria-label="Close dialog">
           <i class="fa-solid fa-xmark" aria-hidden="true"></i>
         </button>
       </div>
 
       <form id="upload-form" onsubmit="handleFormSubmit(event)" class="modal-form">
         <div>
-          <label class="field-label" for="item-image-file">Photos <span>Select 1 or multiple</span></label>
+          <label class="field-label" for="item-image-file">Photos <span>1 or multiple</span></label>
           <div id="drop-zone" class="drop-zone">
             <input type="file" id="item-image-file" accept="image/*" multiple onchange="previewSelectedImage(event)">
             <div id="upload-placeholder" class="upload-placeholder">
               <i class="fa-solid fa-arrow-up-from-bracket" aria-hidden="true"></i>
-              <span>Choose one or multiple photos</span>
-              <small>PNG, JPG or WEBP · Multiple photos auto-categorized by AI</small>
+              <span>Select or drop photos</span>
+              <small>Auto-categorized by AI Vision</small>
             </div>
             <div id="preview-wrapper" class="preview-wrapper hidden">
               <img id="image-preview" src="" alt="Selected garment preview">
-              <button type="button" onclick="clearPreviewImage(event)" class="icon-button preview-remove" aria-label="Remove selected image">
+              <button type="button" onclick="clearPreviewImage(event)" class="icon-button preview-remove" aria-label="Remove photo">
                 <i class="fa-solid fa-xmark" aria-hidden="true"></i>
               </button>
             </div>
           </div>
-          <div id="batch-upload-status" class="hidden" style="margin-top: 10px; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; background: var(--green-soft); color: var(--ink); display: flex; align-items: center; gap: 8px;">
+          <div id="batch-upload-status" class="hidden" style="margin-top: 10px; padding: 10px 14px; border-radius: 8px; font-size: 0.82rem; font-weight: 500; background: var(--green-soft); color: var(--ink); display: flex; align-items: center; gap: 8px;">
             <i class="fa-solid fa-wand-magic-sparkles" style="color: var(--green)"></i>
             <span id="batch-status-text">AI is auto-categorizing...</span>
           </div>
@@ -240,16 +253,16 @@
         <div class="form-grid form-grid-two">
           <div class="form-field">
             <label class="field-label" for="item-title">Name</label>
-            <input type="text" id="item-title" required maxlength="80" placeholder="e.g. Denim jacket" class="form-control">
+            <input type="text" id="item-title" required maxlength="80" placeholder="e.g. Linen Overshirt" class="form-control">
           </div>
           <div class="form-field">
             <label class="field-label" for="item-category">Category</label>
             <select id="item-category" required class="form-control">
-              <option value="cap">Headwear</option>
               <option value="top">Top</option>
               <option value="bottom">Bottom</option>
               <option value="shoes">Shoes</option>
               <option value="layering">Layer</option>
+              <option value="cap">Headwear</option>
             </select>
           </div>
         </div>
@@ -258,8 +271,8 @@
           <div class="form-field">
             <label class="field-label" for="item-color">Color</label>
             <div class="color-control">
-              <input type="color" id="item-color" value="#0284c7">
-              <span id="color-hex-text">#0284c7</span>
+              <input type="color" id="item-color" value="#1c3629">
+              <span id="color-hex-text">#1c3629</span>
             </div>
           </div>
           <div class="form-field">
@@ -290,13 +303,13 @@
     </div>
   </div>
 
+  <!-- Style Profile Modal (Bottom Sheet on Mobile) -->
   <div id="profile-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title">
     <div class="modal-card">
+      <div class="sheet-grabber" aria-hidden="true"></div>
       <div class="modal-header">
-        <div>
-                    <h2 id="profile-modal-title">Your style profile</h2>
-        </div>
-        <button type="button" onclick="closeProfileModal()" class="icon-button modal-close" aria-label="Close style profile">
+        <h2 id="profile-modal-title">Style profile</h2>
+        <button type="button" onclick="closeProfileModal()" class="icon-button modal-close" aria-label="Close dialog">
           <i class="fa-solid fa-xmark" aria-hidden="true"></i>
         </button>
       </div>
@@ -307,28 +320,28 @@
           <input id="profile-name" type="text" maxlength="60" placeholder="e.g. Alex" class="form-control">
         </div>
         <div class="form-field">
-          <label class="field-label" for="profile-style">Style you like</label>
+          <label class="field-label" for="profile-style">Preferred aesthetic</label>
           <select id="profile-style" class="form-control">
             <option value="any">No preference</option>
             <option value="minimal">Minimal &amp; clean</option>
-            <option value="classic">Classic</option>
-            <option value="casual">Casual</option>
+            <option value="classic">Classic tailoring</option>
+            <option value="casual">Relaxed casual</option>
             <option value="streetwear">Streetwear</option>
-            <option value="sporty">Sporty</option>
+            <option value="sporty">Sport &amp; active</option>
             <option value="formal">Smart &amp; formal</option>
           </select>
         </div>
         <div class="form-field">
-          <label class="field-label" for="profile-colors">Favorite colors</label>
-          <input id="profile-colors" type="text" maxlength="120" placeholder="e.g. navy, white, beige" class="form-control">
+          <label class="field-label" for="profile-colors">Favorite tones</label>
+          <input id="profile-colors" type="text" maxlength="120" placeholder="e.g. olive, ecru, navy" class="form-control">
         </div>
         <div class="form-field">
-          <label class="field-label" for="profile-avoid">Things to avoid</label>
-          <input id="profile-avoid" type="text" maxlength="160" placeholder="e.g. caps, bright colors, graphic prints" class="form-control">
+          <label class="field-label" for="profile-avoid">Avoid in outfits</label>
+          <input id="profile-avoid" type="text" maxlength="160" placeholder="e.g. neon, caps, loud graphics" class="form-control">
         </div>
         <div class="form-field">
-          <label class="field-label" for="profile-notes">Notes for your stylist</label>
-          <textarea id="profile-notes" rows="3" maxlength="500" placeholder="e.g. I prefer simple outfits and light layers." class="form-control"></textarea>
+          <label class="field-label" for="profile-notes">Stylist guidance</label>
+          <textarea id="profile-notes" rows="3" maxlength="500" placeholder="e.g. Keep cuts relaxed, prefer clean monochromatic looks." class="form-control"></textarea>
         </div>
         <p id="profile-save-status" class="save-status hidden" role="status">Profile saved.</p>
         <div class="modal-actions">
@@ -339,63 +352,63 @@
     </div>
   </div>
 
+  <!-- Signin Benefits Modal (Bottom Sheet on Mobile) -->
+  <div id="auth-benefits-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+    <div class="modal-card" style="max-width: 480px; text-align: center;">
+      <div class="sheet-grabber" aria-hidden="true"></div>
+      <div class="modal-header" style="justify-content: center; position: relative;">
+        <h2 id="auth-modal-title" style="font-family: var(--font-display); font-size: 1.85rem; font-style: italic;">Unlock your full wardrobe</h2>
+        <button type="button" onclick="closeAuthBenefitsModal()" class="icon-button modal-close" style="position: absolute; right: 0;" aria-label="Close dialog">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </div>
+      <p style="color: var(--muted); font-size: 0.92rem; margin-top: 4px; margin-bottom: 22px; line-height: 1.45;">Sync your pieces across your phone, tablet, and computer with unlimited AI styling.</p>
+
+      <div style="display: grid; gap: 12px; text-align: left; margin-bottom: 24px;">
+        <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--surface-soft); border: 1px solid var(--line);">
+          <i class="fa-solid fa-cloud-arrow-up" style="color: var(--accent); font-size: 1.15rem; margin-top: 2px;"></i>
+          <div>
+            <div style="font-weight: 600; font-size: 0.88rem; color: var(--ink);">Cloud sync across devices</div>
+            <div style="font-size: 0.78rem; color: var(--muted);">Access your closet from any phone or computer with seamless sync.</div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--surface-soft); border: 1px solid var(--line);">
+          <i class="fa-solid fa-wand-magic-sparkles" style="color: var(--accent); font-size: 1.15rem; margin-top: 2px;"></i>
+          <div>
+            <div style="font-weight: 600; font-size: 0.88rem; color: var(--ink);">Unlimited AI outfit pairings</div>
+            <div style="font-size: 0.78rem; color: var(--muted);">Intelligent outfit recommendations tailored to occasions and weather.</div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--surface-soft); border: 1px solid var(--line);">
+          <i class="fa-solid fa-shield-halved" style="color: var(--accent); font-size: 1.15rem; margin-top: 2px;"></i>
+          <div>
+            <div style="font-weight: 600; font-size: 0.88rem; color: var(--ink);">Private Cloudinary storage</div>
+            <div style="font-size: 0.78rem; color: var(--muted);">Your garment photos stay in your private folder and never merge with others.</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="clerk-sign-in-mount">
+        <button type="button" id="clerk-auth-submit-btn" onclick="triggerClerkSignIn()" class="button button-primary" style="width: 100%; justify-content: center; padding: 13px 20px; font-size: 0.92rem;">
+          <i class="fa-solid fa-arrow-right-to-bracket"></i>
+          <span>Sign In / Create Account</span>
+        </button>
+      </div>
+
+      <button type="button" onclick="closeAuthBenefitsModal()" class="button" style="background: none; border: none; color: var(--quiet); font-size: 0.82rem; margin-top: 14px; cursor: pointer;">
+        Continue as guest for now
+      </button>
+    </div>
+  </div>
+
   <footer class="site-footer">
     <div class="footer-inner">
-      <span>E-Wardrobe <span class="footer-dot">/</span> Outfit ideas from your own closet.</span>
+      <span>E-Wardrobe &middot; A considered wardrobe</span>
       <a href="https://zamindev.vercel.app" target="_blank" rel="noopener noreferrer">Designed by zamin.dev <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
       <a href="https://www.instagram.com/zamin.ceo/" target="_blank" rel="noopener noreferrer" aria-label="Follow zamin.ceo on Instagram"><i class="fa-brands fa-instagram" aria-hidden="true"></i>zamin.ceo</a>
     </div>
   </footer>
 
   <script src="index.js"></script>
-
-  <!-- Signin Benefits Modal -->
-  <div id="auth-benefits-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
-    <div class="modal-card" style="max-width: 480px; text-align: center;">
-      <div class="modal-header" style="justify-content: center; position: relative;">
-        <h2 id="auth-modal-title" style="font-family: var(--font-display); font-size: 1.75rem;">Unlock your full wardrobe</h2>
-        <button type="button" onclick="closeAuthBenefitsModal()" class="icon-button modal-close" style="position: absolute; right: 0;" aria-label="Close modal">
-          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-        </button>
-      </div>
-      <p style="color: var(--muted); font-size: 0.95rem; margin-top: 6px; margin-bottom: 24px;">Sign in to sync your wardrobe across all your devices and get unlimited AI styling.</p>
-
-      <div style="display: grid; gap: 14px; text-align: left; margin-bottom: 24px;">
-        <div style="display: flex; gap: 14px; align-items: flex-start; padding: 12px 14px; border-radius: 10px; background: var(--surface-soft); border: 1px solid var(--line);">
-          <i class="fa-solid fa-cloud-arrow-up" style="color: var(--green); font-size: 1.25rem; margin-top: 2px;"></i>
-          <div>
-            <div style="font-weight: 600; font-size: 0.9rem;">Cloud Sync Across Devices</div>
-            <div style="font-size: 0.82rem; color: var(--muted);">Access your clothes from your phone, laptop, or tablet anytime.</div>
-          </div>
-        </div>
-        <div style="display: flex; gap: 14px; align-items: flex-start; padding: 12px 14px; border-radius: 10px; background: var(--surface-soft); border: 1px solid var(--line);">
-          <i class="fa-solid fa-wand-magic-sparkles" style="color: var(--green); font-size: 1.25rem; margin-top: 2px;"></i>
-          <div>
-            <div style="font-weight: 600; font-size: 0.9rem;">Unlimited AI Stylist</div>
-            <div style="font-size: 0.82rem; color: var(--muted);">AI analyzes all your pieces for weddings, dates, casual outings & work.</div>
-          </div>
-        </div>
-        <div style="display: flex; gap: 14px; align-items: flex-start; padding: 12px 14px; border-radius: 10px; background: var(--surface-soft); border: 1px solid var(--line);">
-          <i class="fa-solid fa-shield-halved" style="color: var(--green); font-size: 1.25rem; margin-top: 2px;"></i>
-          <div>
-            <div style="font-weight: 600; font-size: 0.9rem;">Permanent Private Storage</div>
-            <div style="font-size: 0.82rem; color: var(--muted);">Photos are saved safely in your own Cloudinary folder and never merged.</div>
-          </div>
-        </div>
-      </div>
-
-      <div id="clerk-sign-in-mount">
-        <button type="button" id="clerk-auth-submit-btn" onclick="triggerClerkSignIn()" class="button button-primary" style="width: 100%; justify-content: center; padding: 12px 20px; font-size: 0.95rem;">
-          <i class="fa-solid fa-arrow-right-to-bracket"></i>
-          <span>Sign In / Create Account</span>
-        </button>
-      </div>
-
-      <button type="button" onclick="closeAuthBenefitsModal()" class="button" style="background: none; border: none; color: var(--muted); font-size: 0.85rem; margin-top: 14px; cursor: pointer;">
-        Continue as guest for now
-      </button>
-    </div>
-  </div>
-
 </body>
 </html>
