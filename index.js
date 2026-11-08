@@ -1,43 +1,106 @@
-
 /* ==========================================================================
    CLERK AUTHENTICATION INTEGRATION
    ========================================================================== */
 const CLERK_PUBLISHABLE_KEY = "pk_test_ZXhhY3Qtd2FzcC02NjAyLmNsZXJrLmFjY291bnRzLmRldiQ";
+const CLERK_FRONTEND_API = "https://exact-wasp-6602.clerk.accounts.dev";
+let clerkInstance = null;
+
+function openAuthBenefitsModal() {
+  const modal = document.getElementById("auth-benefits-modal");
+  if (modal) modal.classList.remove("hidden");
+}
+
+function closeAuthBenefitsModal() {
+  const modal = document.getElementById("auth-benefits-modal");
+  if (modal) modal.classList.add("hidden");
+}
 
 function handleClerkSignIn() {
-  if (window.Clerk && typeof window.Clerk.openSignIn === "function") {
+  openAuthBenefitsModal();
+}
+
+async function triggerClerkSignIn() {
+  const mountTarget = document.getElementById("clerk-sign-in-mount");
+  if (mountTarget) {
+    mountTarget.innerHTML = '<div style="padding: 24px; color: var(--muted); font-size: 0.95rem; text-align: center;"><i class="fa-solid fa-spinner fa-spin" style="margin-right: 8px;"></i> Loading sign in...</div>';
+  }
+
+  const clerk = await getClerkInstance();
+  if (clerk) {
+    if (mountTarget) {
+      mountTarget.innerHTML = "";
+      try {
+        clerk.mountSignIn(mountTarget);
+        return;
+      } catch (err) {
+        console.warn("mountSignIn fallback to openSignIn:", err);
+      }
+    }
     try {
-      window.Clerk.openSignIn();
-      return;
+      clerk.openSignIn();
+      closeAuthBenefitsModal();
     } catch (e) {
-      console.warn("Clerk modal open error:", e);
+      console.error("Clerk openSignIn error:", e);
     }
   }
-  window.location.href = "https://exact-wasp-6602.clerk.accounts.dev/sign-in?redirect_url=" + encodeURIComponent(window.location.href);
+}
+
+async function getClerkInstance() {
+  if (clerkInstance) return clerkInstance;
+
+  if (window.Clerk && window.Clerk.loaded) {
+    clerkInstance = window.Clerk;
+    return clerkInstance;
+  }
+
+  if (window.Clerk && typeof window.Clerk.load === "function") {
+    await window.Clerk.load();
+    clerkInstance = window.Clerk;
+    return clerkInstance;
+  }
+
+  return new Promise((resolve) => {
+    let attempts = 0;
+    const interval = setInterval(async () => {
+      attempts++;
+      if (window.Clerk) {
+        clearInterval(interval);
+        try {
+          if (!window.Clerk.loaded && typeof window.Clerk.load === "function") {
+            await window.Clerk.load();
+          }
+          clerkInstance = window.Clerk;
+          resolve(clerkInstance);
+        } catch (e) {
+          console.warn("Clerk load error:", e);
+          resolve(window.Clerk);
+        }
+      } else if (attempts > 30) {
+        clearInterval(interval);
+        resolve(null);
+      }
+    }, 150);
+  });
 }
 
 async function initClerk() {
-  const signInBtn = document.getElementById("clerk-sign-in-btn");
-  const userButtonDiv = document.getElementById("clerk-user-button");
-
-  if (!window.Clerk) {
-    const script = document.createElement("script");
-    script.setAttribute("data-clerk-publishable-key", CLERK_PUBLISHABLE_KEY);
-    script.async = true;
-    script.src = "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js";
-    document.head.appendChild(script);
-    await new Promise((resolve) => { script.onload = resolve; });
-  }
-
-  try {
-    await window.Clerk.load();
-    updateClerkAuthState(window.Clerk.user);
-
-    window.Clerk.addListener(({ user }) => {
+  const clerk = await getClerkInstance();
+  if (clerk) {
+    updateClerkAuthState(clerk.user);
+    clerk.addListener(({ user }) => {
       updateClerkAuthState(user);
     });
-  } catch (err) {
-    console.warn("Clerk initialization notice:", err);
+
+    // Auto-popup sign-in benefits for guests after 1.5s
+    if (!clerk.user) {
+      setTimeout(() => {
+        const hasSeenBenefits = sessionStorage.getItem("has_seen_auth_benefits");
+        if (!hasSeenBenefits) {
+          sessionStorage.setItem("has_seen_auth_benefits", "1");
+          openAuthBenefitsModal();
+        }
+      }, 1500);
+    }
   }
 }
 
@@ -46,17 +109,16 @@ function updateClerkAuthState(user) {
   const userButtonDiv = document.getElementById("clerk-user-button");
 
   if (user) {
+    closeAuthBenefitsModal();
     if (signInBtn) signInBtn.classList.add("hidden");
-    if (userButtonDiv) {
+    if (userButtonDiv && clerkInstance) {
       userButtonDiv.innerHTML = "";
-      window.Clerk.mountUserButton(userButtonDiv);
+      clerkInstance.mountUserButton(userButtonDiv);
     }
 
-    // Set storage keys scoped to this specific user ID
     const userStorageKey = "e_wardrobe_items_" + user.id;
     const userProfileKey = "e_wardrobe_profile_" + user.id;
 
-    // Migrate any items from guest mode into the user's account if empty
     if (!localStorage.getItem(userStorageKey) && localStorage.getItem("e_wardrobe_items_v2")) {
       const guestItems = localStorage.getItem("e_wardrobe_items_v2");
       if (guestItems && guestItems !== "[]") {
@@ -74,10 +136,10 @@ function updateClerkAuthState(user) {
     PROFILE_STORAGE_KEY = "e_wardrobe_profile_v1";
   }
 
-  initClerk();
   loadSavedWardrobe();
   loadProfile();
 }
+
 function guessCategoryFromFilename(filename) {
   const name = String(filename || "").toLowerCase();
   if (/\b(jeans?|pants?|trousers?|shorts?|skirt|leggings?|chinos?|cargos?|bottoms?)\b/.test(name)) return "bottom";
