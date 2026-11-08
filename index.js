@@ -1711,21 +1711,47 @@ function initTheme() {
   }
 }
 
-function scrollToSection(id) {
-  const target = document.getElementById(id);
-  if (!target) return;
-  const navOffset = 76;
-  const targetTop = target.getBoundingClientRect().top + window.pageYOffset - navOffset;
-  window.scrollTo({
-    top: Math.max(0, targetTop),
-    behavior: "smooth"
+function switchTab(tabName) {
+  // Hide all screens
+  document.querySelectorAll(".app-screen").forEach((screen) => {
+    screen.classList.remove("active");
   });
 
+  // Activate selected screen
+  const targetScreen = document.getElementById("screen-" + tabName);
+  if (targetScreen) {
+    targetScreen.classList.add("active");
+  }
+
+  // Update floating dock active state
   document.querySelectorAll(".dock-item").forEach((item) => {
     item.classList.remove("active");
+    if (item.getAttribute("data-tab") === tabName) {
+      item.classList.add("active");
+    }
   });
-  const activeBtn = document.querySelector(`.dock-item[onclick*="${id}"]`);
-  if (activeBtn) activeBtn.classList.add("active");
+
+  // Update iPad/desktop segmented control active state
+  document.querySelectorAll(".nav-segment-btn").forEach((btn) => {
+    btn.classList.remove("active");
+    btn.setAttribute("aria-selected", "false");
+    if (btn.getAttribute("data-tab") === tabName) {
+      btn.classList.add("active");
+      btn.setAttribute("aria-selected", "true");
+    }
+  });
+
+  window.scrollTo({ top: 0, behavior: "instant" });
+
+  if (tabName === "palette" && typeof drawColorWheel === "function") {
+    setTimeout(drawColorWheel, 50);
+  }
+}
+
+function scrollToSection(id) {
+  if (id.includes("closet")) switchTab("closet");
+  else if (id.includes("stylist")) switchTab("stylist");
+  else if (id.includes("palette")) switchTab("palette");
 }
 
 document.getElementById("item-color").addEventListener("input", (e) => {

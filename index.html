@@ -2,412 +2,546 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#faf9f6" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0c0e0d" media="(prefers-color-scheme: dark)">
-  <meta name="description" content="A considered personal wardrobe and AI stylist. Catalog your clothes and discover fresh combinations from pieces you own.">
-  <title>E-Wardrobe — A wardrobe, considered</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Wardrobe">
+  <meta name="theme-color" content="#f2f4f8" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0a0b10" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="A native iOS-inspired digital wardrobe and AI stylist powered by Expo Liquid Glass design.">
+  <title>E-Wardrobe &mdash; Considered AI Stylist</title>
+  
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <script async crossorigin="anonymous" data-clerk-publishable-key="pk_test_ZXhhY3Qtd2FzcC02NjAyLmNsZXJrLmFjY291bnRzLmRldiQ" src="https://exact-wasp-6602.clerk.accounts.dev/npm/@clerk/clerk-js@5/dist/clerk.browser.js" type="text/javascript"></script>
   <link rel="stylesheet" href="index.css">
   <link rel="icon" type="image/png" href="Favicon.png">
 </head>
-<body class="app-shell">
-  <header class="site-header">
-    <div class="topbar">
-      <a class="brand" href="#" aria-label="E-Wardrobe home">
-        <img src="Favicon.png" alt="" class="brand-mark">
-        <span class="brand-copy">
-          <span class="brand-name">E-Wardrobe</span>
-          <span class="brand-caption">Considered</span>
-        </span>
-      </a>
+<body class="app-body">
+  <!-- Ambient Liquid Glass Gradient Background Lights -->
+  <div class="ambient-glow glow-top-left" aria-hidden="true"></div>
+  <div class="ambient-glow glow-top-right" aria-hidden="true"></div>
+  <div class="ambient-glow glow-bottom-center" aria-hidden="true"></div>
 
-      <div class="header-actions">
-        <span class="saved-count" title="Total saved pieces">
+  <!-- iOS Liquid Glass Top Navigation Bar -->
+  <header class="ios-navbar">
+    <div class="navbar-inner">
+      <div class="navbar-left">
+        <a class="nav-brand" href="#" onclick="switchTab('closet'); return false;" aria-label="Wardrobe Home">
+          <div class="brand-glyph">
+            <i class="fa-solid fa-shapes"></i>
+          </div>
+          <span class="brand-title">E-Wardrobe</span>
+        </a>
+        <span class="nav-stats-pill" title="Total pieces in your wardrobe">
           <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
           <span id="saved-count-badge">0 items</span>
         </span>
-        <div class="utility-actions" aria-label="Wardrobe tools">
-          <button type="button" class="icon-button" onclick="exportWardrobeData()" aria-label="Export wardrobe backup" title="Export backup">
+      </div>
+
+      <!-- iPad / Desktop Segmented Tab Switcher -->
+      <nav class="nav-segmented-control" role="tablist" aria-label="Main Navigation">
+        <button type="button" role="tab" class="nav-segment-btn active" data-tab="closet" onclick="switchTab('closet')" aria-selected="true">
+          <i class="fa-solid fa-shirt" aria-hidden="true"></i>
+          <span>Closet</span>
+        </button>
+        <button type="button" role="tab" class="nav-segment-btn" data-tab="stylist" onclick="switchTab('stylist')" aria-selected="false">
+          <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+          <span>Stylist</span>
+        </button>
+        <button type="button" role="tab" class="nav-segment-btn" data-tab="palette" onclick="switchTab('palette')" aria-selected="false">
+          <i class="fa-solid fa-palette" aria-hidden="true"></i>
+          <span>Palette</span>
+        </button>
+      </nav>
+
+      <div class="navbar-right">
+        <!-- Quick Utility Actions -->
+        <div class="nav-action-group">
+          <button type="button" class="glass-icon-btn" onclick="exportWardrobeData()" aria-label="Export backup" title="Export wardrobe backup">
             <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
           </button>
-          <label class="icon-button file-button" aria-label="Import wardrobe backup" title="Import backup">
+          <label class="glass-icon-btn file-upload-btn" aria-label="Import backup" title="Import wardrobe backup">
             <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
             <input type="file" id="import-file-input" accept=".json" class="visually-hidden" onchange="importWardrobeData(event)">
           </label>
-          <button type="button" id="theme-toggle" class="icon-button theme-toggle" aria-label="Toggle color theme" title="Toggle theme">
+          <button type="button" id="theme-toggle" class="glass-icon-btn" aria-label="Toggle dark/light theme" title="Toggle theme">
             <i class="fa-regular fa-moon theme-light-icon" aria-hidden="true"></i>
             <i class="fa-regular fa-sun theme-dark-icon" aria-hidden="true"></i>
           </button>
         </div>
-        <div id="clerk-auth-container" class="clerk-auth-container">
-          <button type="button" id="clerk-sign-in-btn" class="button button-secondary sign-in-button" aria-label="Sign in" onclick="handleClerkSignIn()">
+
+        <!-- Clerk Authentication Button & Avatar -->
+        <div id="clerk-auth-container" class="clerk-container">
+          <button type="button" id="clerk-sign-in-btn" class="glass-pill-btn clerk-btn" aria-label="Sign in" onclick="handleClerkSignIn()">
             <i class="fa-solid fa-arrow-right-to-bracket" aria-hidden="true"></i>
-            <span>Sign in</span>
+            <span>Sign In</span>
           </button>
           <div id="clerk-user-button"></div>
         </div>
-        <button type="button" onclick="openProfileModal()" class="button button-secondary profile-button" aria-label="Your style profile" title="Your style profile">
+
+        <!-- Profile Settings Button -->
+        <button type="button" onclick="openProfileModal()" class="glass-pill-btn profile-nav-btn" aria-label="Profile and preferences">
           <i class="fa-regular fa-user" aria-hidden="true"></i>
           <span id="profile-button-label">Profile</span>
         </button>
-        <button type="button" onclick="openUploadModal()" class="button button-primary add-button" aria-label="Add wardrobe item">
+
+        <!-- Desktop Quick Add Button -->
+        <button type="button" onclick="openUploadModal()" class="glass-cta-btn desktop-add-btn" aria-label="Add new garment">
           <i class="fa-solid fa-plus" aria-hidden="true"></i>
-          <span>Add piece</span>
+          <span>Add Piece</span>
         </button>
       </div>
     </div>
   </header>
 
-  <main class="page-shell">
-    <section class="page-intro" aria-labelledby="page-title">
-      <div class="intro-masthead">
-        <h1 id="page-title">A wardrobe, considered.</h1>
-        <p class="intro-copy">Every piece in your closet, styled without the morning friction. Pair what you own into looks that work.</p>
-      </div>
-    </section>
+  <!-- Main Native App Screen Container -->
+  <main class="app-viewport">
 
-    <section class="season-toolbar" aria-labelledby="season-title">
-      <div class="toolbar-heading">
-        <h2 id="season-title">By season</h2>
-      </div>
-      <div class="season-filters" role="group" aria-label="Filter wardrobe by season">
-        <button type="button" onclick="setSeasonFilter('all')" id="season-btn-all" class="season-filter-btn is-active" aria-pressed="true">
-          <i class="fa-solid fa-border-all" aria-hidden="true"></i><span>All seasons</span>
-        </button>
-        <button type="button" onclick="setSeasonFilter('summer')" id="season-btn-summer" class="season-filter-btn" aria-pressed="false">
-          <i class="fa-regular fa-sun" aria-hidden="true"></i><span>Summer</span>
-        </button>
-        <button type="button" onclick="setSeasonFilter('winter')" id="season-btn-winter" class="season-filter-btn" aria-pressed="false">
-          <i class="fa-regular fa-snowflake" aria-hidden="true"></i><span>Winter</span>
-        </button>
-        <button type="button" onclick="setSeasonFilter('rainy')" id="season-btn-rainy" class="season-filter-btn" aria-pressed="false">
-          <i class="fa-solid fa-cloud-rain" aria-hidden="true"></i><span>Rainy</span>
-        </button>
-      </div>
-    </section>
-
-    <div class="content-grid">
-      <section class="catalog-section" id="closet-section" aria-labelledby="closet-title">
-        <div class="catalog-heading">
-          <div class="title-with-count">
-            <h2 id="closet-title">The collection</h2>
-            <span id="items-count-tag" class="item-count">0</span>
+    <!-- SCREEN 1: CLOSET -->
+    <section id="screen-closet" class="app-screen active" aria-labelledby="closet-header-title">
+      <div id="closet-section" class="screen-content">
+        <!-- Native Large Title Header -->
+        <div class="screen-header">
+          <div class="header-titles">
+            <h1 id="closet-header-title" class="ios-large-title">Closet</h1>
+            <span class="count-bubble" id="items-count-tag">0 pieces</span>
           </div>
-          <button type="button" onclick="resetToDefaultData()" class="text-button">
+          <button type="button" onclick="resetToDefaultData()" class="glass-text-btn" title="Reset sample pieces">
             <i class="fa-solid fa-arrow-rotate-left" aria-hidden="true"></i>
-            <span>Reset pieces</span>
+            <span>Reset</span>
           </button>
         </div>
 
-        <div class="category-filters" role="group" aria-label="Filter wardrobe by category">
-          <button type="button" onclick="setCategoryFilter('all')" id="cat-btn-all" class="cat-filter-btn is-active" aria-pressed="true">All</button>
-          <button type="button" onclick="setCategoryFilter('top')" id="cat-btn-top" class="cat-filter-btn" aria-pressed="false">Tops</button>
-          <button type="button" onclick="setCategoryFilter('bottom')" id="cat-btn-bottom" class="cat-filter-btn" aria-pressed="false">Bottoms</button>
-          <button type="button" onclick="setCategoryFilter('shoes')" id="cat-btn-shoes" class="cat-filter-btn" aria-pressed="false">Shoes</button>
-          <button type="button" onclick="setCategoryFilter('layering')" id="cat-btn-layering" class="cat-filter-btn" aria-pressed="false">Layers</button>
-          <button type="button" onclick="setCategoryFilter('cap')" id="cat-btn-cap" class="cat-filter-btn" aria-pressed="false">Headwear</button>
+        <!-- Filter Segmented Controls Bar -->
+        <div class="filters-container">
+          <!-- Category Segmented Control -->
+          <div class="segmented-track category-track" role="group" aria-label="Filter by category">
+            <button type="button" onclick="setCategoryFilter('all')" id="cat-btn-all" class="cat-filter-btn is-active" aria-pressed="true">All</button>
+            <button type="button" onclick="setCategoryFilter('top')" id="cat-btn-top" class="cat-filter-btn" aria-pressed="false">Tops</button>
+            <button type="button" onclick="setCategoryFilter('bottom')" id="cat-btn-bottom" class="cat-filter-btn" aria-pressed="false">Bottoms</button>
+            <button type="button" onclick="setCategoryFilter('shoes')" id="cat-btn-shoes" class="cat-filter-btn" aria-pressed="false">Shoes</button>
+            <button type="button" onclick="setCategoryFilter('layering')" id="cat-btn-layering" class="cat-filter-btn" aria-pressed="false">Layers</button>
+            <button type="button" onclick="setCategoryFilter('cap')" id="cat-btn-cap" class="cat-filter-btn" aria-pressed="false">Headwear</button>
+          </div>
+
+          <!-- Season Segmented Control -->
+          <div class="segmented-track season-track" role="group" aria-label="Filter by season">
+            <button type="button" onclick="setSeasonFilter('all')" id="season-btn-all" class="season-filter-btn is-active" aria-pressed="true">
+              <i class="fa-solid fa-infinity" aria-hidden="true"></i>
+              <span>All Seasons</span>
+            </button>
+            <button type="button" onclick="setSeasonFilter('summer')" id="season-btn-summer" class="season-filter-btn" aria-pressed="false">
+              <i class="fa-regular fa-sun" aria-hidden="true"></i>
+              <span>Summer</span>
+            </button>
+            <button type="button" onclick="setSeasonFilter('winter')" id="season-btn-winter" class="season-filter-btn" aria-pressed="false">
+              <i class="fa-regular fa-snowflake" aria-hidden="true"></i>
+              <span>Winter</span>
+            </button>
+            <button type="button" onclick="setSeasonFilter('rainy')" id="season-btn-rainy" class="season-filter-btn" aria-pressed="false">
+              <i class="fa-solid fa-cloud-rain" aria-hidden="true"></i>
+              <span>Rainy</span>
+            </button>
+          </div>
         </div>
 
+        <!-- Garment Photo Lookbook Grid -->
         <div id="wardrobe-grid" class="wardrobe-grid" aria-live="polite"></div>
-      </section>
+      </div>
+    </section>
 
-      <aside class="styling-column" id="stylist-section" aria-label="Outfit suggestions">
-        <section class="stylist-card" aria-labelledby="stylist-title">
-          <div class="stylist-card-top">
-            <span class="stylist-symbol" aria-hidden="true"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
-            <span class="stylist-label">AI Stylist</span>
+    <!-- SCREEN 2: STYLIST STUDIO -->
+    <section id="screen-stylist" class="app-screen" aria-labelledby="stylist-header-title">
+      <div id="stylist-section" class="screen-content">
+        <!-- Native Large Title Header -->
+        <div class="screen-header">
+          <div class="header-titles">
+            <h1 id="stylist-header-title" class="ios-large-title">Stylist Studio</h1>
+            <p class="ios-subheadline">AI-curated looks designed strictly from pieces in your closet.</p>
           </div>
-          <h2 id="stylist-title">Find a look for the day.</h2>
-          <p class="stylist-description">Curated pairings built strictly from pieces you already own, ranked by color harmony and occasion.</p>
+        </div>
 
-          <div class="occasion-field">
-            <label for="ai-occasion-select">Occasion</label>
-            <select id="ai-occasion-select" class="form-control">
-              <option value="casual">Everyday Casual</option>
-              <option value="streetwear">Streetwear</option>
-              <option value="formal">Work &amp; Formal</option>
-              <option value="sporty">Sport &amp; Active</option>
-              <option value="party">Evening &amp; Party</option>
-              <option value="wedding">Wedding &amp; Traditional</option>
-              <option value="date">Date Night</option>
-            </select>
+        <!-- Stylist Input Glass Card -->
+        <div class="glass-card stylist-control-deck">
+          <div class="control-deck-row">
+            <div class="ios-form-field">
+              <label for="ai-occasion-select" class="ios-label">Occasion</label>
+              <div class="ios-select-wrapper">
+                <select id="ai-occasion-select" class="ios-select">
+                  <option value="casual">Everyday Casual</option>
+                  <option value="streetwear">Streetwear</option>
+                  <option value="formal">Work &amp; Formal</option>
+                  <option value="sporty">Sport &amp; Active</option>
+                  <option value="party">Evening &amp; Party</option>
+                  <option value="wedding">Wedding &amp; Traditional</option>
+                  <option value="date">Date Night</option>
+                </select>
+                <i class="fa-solid fa-chevron-down select-chevron" aria-hidden="true"></i>
+              </div>
+            </div>
+
+            <div class="ios-form-field">
+              <label for="ai-season-select" class="ios-label">Target Season</label>
+              <div class="ios-select-wrapper">
+                <select id="ai-season-select" class="ios-select">
+                  <option value="all">Any season</option>
+                  <option value="summer">Summer</option>
+                  <option value="winter">Winter</option>
+                  <option value="rainy">Rainy</option>
+                </select>
+                <i class="fa-solid fa-chevron-down select-chevron" aria-hidden="true"></i>
+              </div>
+            </div>
           </div>
 
-          <div class="occasion-field">
-            <label for="ai-season-select">Season</label>
-            <select id="ai-season-select" class="form-control">
-              <option value="all">Any season</option>
-              <option value="summer">Summer</option>
-              <option value="winter">Winter</option>
-              <option value="rainy">Rainy</option>
-            </select>
-          </div>
-
-          <button type="button" onclick="runAIGenerator()" id="generate-btn" class="button generate-button">
-            <span>Suggest outfits</span>
-            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+          <button type="button" onclick="runAIGenerator()" id="generate-btn" class="glass-cta-btn generate-cta">
+            <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+            <span>Curate Outfits</span>
           </button>
-          <p class="privacy-note"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Stylist evaluates your actual closet items and saved style profile.</p>
-          <p id="ai-status" class="ai-status" role="status" aria-live="polite"></p>
-        </section>
 
-        <section class="recommendations-section" aria-labelledby="recommendations-title">
-          <div class="section-heading-row">
-            <h2 id="recommendations-title">Suggested looks</h2>
-            <span id="combos-found-tag" class="results-count">Ready</span>
+          <div class="status-row">
+            <span id="ai-status" class="ai-status-text" role="status" aria-live="polite"></span>
+            <span id="combos-found-tag" class="combos-status-pill">Ready</span>
           </div>
-          <div id="ai-outfits-container" class="outfits-container" aria-live="polite">
-            <div class="empty-outfits">
-              <span class="empty-outfits-icon" aria-hidden="true"><i class="fa-regular fa-compass"></i></span>
-              <p>Pick an occasion above and tap "Suggest outfits" to generate personalized combinations.</p>
+        </div>
+
+        <!-- Outfits Presentation Container -->
+        <div class="outfits-deck">
+          <div class="outfits-deck-header">
+            <h2 class="ios-title-2">Recommended Combinations</h2>
+          </div>
+          <div id="ai-outfits-container" class="outfits-grid" aria-live="polite">
+            <div class="empty-glass-state">
+              <div class="empty-glyph">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+              </div>
+              <h3 class="empty-title">Ready to style</h3>
+              <p class="empty-copy">Select an occasion and tap "Curate Outfits" to generate personalized combinations.</p>
             </div>
           </div>
-        </section>
+        </div>
+      </div>
+    </section>
 
-        <section class="palette-card" id="palette-section" aria-labelledby="palette-title">
-          <div class="palette-heading">
-            <h2 id="palette-title">Wardrobe tones</h2>
-            <i class="fa-solid fa-circle-half-stroke palette-icon" aria-hidden="true"></i>
+    <!-- SCREEN 3: COLOR PALETTE -->
+    <section id="screen-palette" class="app-screen" aria-labelledby="palette-header-title">
+      <div id="palette-section" class="screen-content">
+        <!-- Native Large Title Header -->
+        <div class="screen-header">
+          <div class="header-titles">
+            <h1 id="palette-header-title" class="ios-large-title">Color Harmony</h1>
+            <p class="ios-subheadline">Tonal distribution and balance across your wardrobe.</p>
           </div>
-          <div class="palette-content">
-            <canvas id="color-wheel-canvas" width="100" height="100" aria-label="Color wheel showing colors in your wardrobe"></canvas>
-            <div class="palette-stats">
-              <div class="palette-stat">
-                <span>Color range</span>
-                <strong id="harmony-diversity-score">Balanced</strong>
-              </div>
-              <div class="palette-stat">
-                <span>Dominant tone</span>
-                <strong id="harmony-dominant-tone">Neutral</strong>
-              </div>
-              <div class="palette-meter" aria-hidden="true"><span id="harmony-bar-fill"></span></div>
+        </div>
+
+        <!-- Color Studio Glass Card -->
+        <div class="glass-card palette-studio-card">
+          <div class="palette-canvas-container">
+            <canvas id="color-wheel-canvas" width="220" height="220" aria-label="Wardrobe color spectrum wheel"></canvas>
+            <div class="wheel-center-glass">
+              <i class="fa-solid fa-droplet"></i>
             </div>
           </div>
-        </section>
-      </aside>
-    </div>
+
+          <div class="palette-metrics-grid">
+            <div class="glass-metric-cell">
+              <span class="metric-label">Color Range</span>
+              <strong id="harmony-diversity-score" class="metric-value">Balanced</strong>
+            </div>
+            <div class="glass-metric-cell">
+              <span class="metric-label">Dominant Tone</span>
+              <strong id="harmony-dominant-tone" class="metric-value">Neutral</strong>
+            </div>
+          </div>
+
+          <div class="distribution-section">
+            <span class="metric-label">Tonal Distribution</span>
+            <div class="palette-meter" aria-hidden="true">
+              <span class="meter-bar meter-warm" title="Warm colors"></span>
+              <span class="meter-bar meter-cool" title="Cool colors"></span>
+              <span class="meter-bar meter-neutral" title="Neutral colors"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </main>
 
-  <!-- Mobile Floating Action Dock (320px - 767px) -->
-  <nav class="mobile-dock" id="mobile-dock" aria-label="Mobile navigation">
-    <button type="button" class="dock-item is-active" onclick="scrollToSection('closet-section')" aria-label="View collection">
-      <i class="fa-solid fa-shirt"></i>
-      <span>Closet</span>
+  <!-- Expo Liquid Glass Floating Bottom Navigation Bar (Dock) -->
+  <nav id="mobile-dock" class="liquid-glass-dock" aria-label="Mobile Dock Navigation">
+    <button type="button" class="dock-item active" data-tab="closet" onclick="switchTab('closet')" aria-label="Closet">
+      <div class="dock-icon">
+        <i class="fa-solid fa-shirt"></i>
+      </div>
+      <span class="dock-label">Closet</span>
     </button>
-    <button type="button" class="dock-item" onclick="scrollToSection('stylist-section')" aria-label="AI Stylist">
-      <i class="fa-solid fa-wand-magic-sparkles"></i>
-      <span>Stylist</span>
+
+    <button type="button" class="dock-item" data-tab="stylist" onclick="switchTab('stylist')" aria-label="Stylist">
+      <div class="dock-icon">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+      </div>
+      <span class="dock-label">Stylist</span>
     </button>
-    <button type="button" class="dock-item dock-add-btn" onclick="openUploadModal()" aria-label="Add new garment">
+
+    <!-- Center Elevated Plus Action Button -->
+    <button type="button" class="dock-add-center" onclick="openUploadModal()" aria-label="Add new garment">
+      <div class="dock-add-glow"></div>
       <i class="fa-solid fa-plus"></i>
     </button>
-    <button type="button" class="dock-item" onclick="scrollToSection('palette-section')" aria-label="Color palette">
-      <i class="fa-solid fa-circle-half-stroke"></i>
-      <span>Tones</span>
+
+    <button type="button" class="dock-item" data-tab="palette" onclick="switchTab('palette')" aria-label="Palette">
+      <div class="dock-icon">
+        <i class="fa-solid fa-palette"></i>
+      </div>
+      <span class="dock-label">Palette</span>
     </button>
-    <button type="button" class="dock-item" onclick="openProfileModal()" aria-label="Style profile">
-      <i class="fa-regular fa-user"></i>
-      <span>Profile</span>
+
+    <button type="button" class="dock-item" data-tab="profile" onclick="openProfileModal()" aria-label="Profile">
+      <div class="dock-icon">
+        <i class="fa-regular fa-user"></i>
+      </div>
+      <span class="dock-label">Profile</span>
     </button>
   </nav>
 
-  <!-- Upload Piece Modal (Bottom Sheet on Mobile) -->
+  <!-- MODAL 1: Upload / Add Garment Sheet -->
   <div id="upload-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="upload-modal-title">
-    <div class="modal-card" id="modal-container">
+    <div class="modal-glass-sheet">
       <div class="sheet-grabber" aria-hidden="true"></div>
-      <div class="modal-header">
-        <h2 id="upload-modal-title">Add a piece</h2>
-        <button type="button" onclick="closeUploadModal()" class="icon-button modal-close" aria-label="Close dialog">
+      
+      <div class="modal-sheet-header">
+        <h2 id="upload-modal-title" class="sheet-title">Add Garment</h2>
+        <button type="button" onclick="closeUploadModal()" class="glass-icon-btn close-btn" aria-label="Close dialog">
           <i class="fa-solid fa-xmark" aria-hidden="true"></i>
         </button>
       </div>
 
-      <form id="upload-form" onsubmit="handleFormSubmit(event)" class="modal-form">
-        <div>
-          <label class="field-label" for="item-image-file">Photos <span>1 or multiple</span></label>
-          <div id="drop-zone" class="drop-zone">
-            <input type="file" id="item-image-file" accept="image/*" multiple onchange="previewSelectedImage(event)">
-            <div id="upload-placeholder" class="upload-placeholder">
-              <i class="fa-solid fa-arrow-up-from-bracket" aria-hidden="true"></i>
-              <span>Select or drop photos</span>
-              <small>Auto-categorized by AI Vision</small>
-            </div>
-            <div id="preview-wrapper" class="preview-wrapper hidden">
-              <img id="image-preview" src="" alt="Selected garment preview">
-              <button type="button" onclick="clearPreviewImage(event)" class="icon-button preview-remove" aria-label="Remove photo">
-                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-              </button>
-            </div>
+      <form id="upload-form" class="sheet-form" onsubmit="handleItemUpload(event)">
+        <!-- File Drop Zone -->
+        <div id="drop-zone" class="glass-dropzone" role="button" tabindex="0" aria-label="Upload garment photo" onclick="document.getElementById('item-image-file').click()">
+          <input type="file" id="item-image-file" accept="image/*" class="visually-hidden" onchange="previewSelectedImage(event)" aria-label="Choose garment photo file">
+          <div id="preview-wrapper" class="preview-wrapper hidden">
+            <img id="image-preview" src="#" alt="Garment preview image" class="preview-img">
+            <button type="button" onclick="clearSelectedImage(event)" class="glass-icon-btn remove-photo-btn" aria-label="Remove image">
+              <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+            </button>
           </div>
-          <div id="batch-upload-status" class="hidden" style="margin-top: 10px; padding: 10px 14px; border-radius: 8px; font-size: 0.82rem; font-weight: 500; background: var(--green-soft); color: var(--ink); display: flex; align-items: center; gap: 8px;">
-            <i class="fa-solid fa-wand-magic-sparkles" style="color: var(--green)"></i>
-            <span id="batch-status-text">AI is auto-categorizing...</span>
+          <div id="upload-placeholder" class="dropzone-prompt">
+            <div class="dropzone-icon">
+              <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
+            </div>
+            <div class="dropzone-text">
+              <span class="prompt-main">Drop photo or tap to browse</span>
+              <span class="prompt-sub">Supports PNG, JPG, WebP</span>
+            </div>
           </div>
         </div>
 
-        <div class="form-grid form-grid-two">
-          <div class="form-field">
-            <label class="field-label" for="item-title">Name</label>
-            <input type="text" id="item-title" required maxlength="80" placeholder="e.g. Linen Overshirt" class="form-control">
-          </div>
-          <div class="form-field">
-            <label class="field-label" for="item-category">Category</label>
-            <select id="item-category" required class="form-control">
-              <option value="top">Top</option>
-              <option value="bottom">Bottom</option>
-              <option value="shoes">Shoes</option>
-              <option value="layering">Layer</option>
-              <option value="cap">Headwear</option>
-            </select>
-          </div>
+        <div id="batch-upload-status" class="batch-status-panel hidden" role="status" aria-live="polite">
+          <i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i>
+          <span id="batch-status-text">Analyzing image...</span>
         </div>
 
-        <div class="form-grid form-grid-three">
-          <div class="form-field">
-            <label class="field-label" for="item-color">Color</label>
-            <div class="color-control">
-              <input type="color" id="item-color" value="#1c3629">
-              <span id="color-hex-text">#1c3629</span>
+        <!-- Garment Details Fields -->
+        <div class="ios-form-field">
+          <label class="ios-label" for="item-title">Garment Name</label>
+          <input type="text" id="item-title" required placeholder="e.g. Crisp white oxford shirt" class="ios-input">
+        </div>
+
+        <div class="form-row-2">
+          <div class="ios-form-field">
+            <label class="ios-label" for="item-category">Category</label>
+            <div class="ios-select-wrapper">
+              <select id="item-category" required class="ios-select">
+                <option value="top">Top</option>
+                <option value="bottom">Bottom</option>
+                <option value="shoes">Shoes</option>
+                <option value="layering">Layering</option>
+                <option value="cap">Headwear</option>
+              </select>
+              <i class="fa-solid fa-chevron-down select-chevron" aria-hidden="true"></i>
             </div>
           </div>
-          <div class="form-field">
-            <label class="field-label" for="item-pattern">Pattern</label>
-            <select id="item-pattern" class="form-control">
-              <option value="solid">Solid</option>
-              <option value="striped">Striped</option>
-              <option value="graphic">Graphic print</option>
-              <option value="checkered">Checkered</option>
-            </select>
-          </div>
-          <div class="form-field">
-            <label class="field-label" for="item-season">Season</label>
-            <select id="item-season" class="form-control">
-              <option value="all">All-season</option>
-              <option value="summer">Summer</option>
-              <option value="winter">Winter</option>
-              <option value="rainy">Rainy</option>
-            </select>
+
+          <div class="ios-form-field">
+            <label class="ios-label" for="item-season">Season</label>
+            <div class="ios-select-wrapper">
+              <select id="item-season" required class="ios-select">
+                <option value="all">All Season</option>
+                <option value="summer">Summer</option>
+                <option value="winter">Winter</option>
+                <option value="rainy">Rainy</option>
+              </select>
+              <i class="fa-solid fa-chevron-down select-chevron" aria-hidden="true"></i>
+            </div>
           </div>
         </div>
 
-        <div class="modal-actions">
-          <button type="button" onclick="closeUploadModal()" class="button button-secondary">Cancel</button>
-          <button type="submit" class="button button-primary">Save piece</button>
+        <div class="form-row-2">
+          <div class="ios-form-field">
+            <label class="ios-label" for="item-color">Primary Tone</label>
+            <div class="color-picker-row">
+              <input type="color" id="item-color" value="#1d1d1f" class="ios-color-input">
+              <span id="color-hex-text" class="color-hex-label">#1d1d1f</span>
+            </div>
+          </div>
+
+          <div class="ios-form-field">
+            <label class="ios-label" for="item-pattern">Pattern</label>
+            <div class="ios-select-wrapper">
+              <select id="item-pattern" class="ios-select">
+                <option value="solid">Solid</option>
+                <option value="striped">Striped</option>
+                <option value="checkered">Checkered</option>
+                <option value="printed">Graphic / Printed</option>
+                <option value="textured">Textured / Knit</option>
+              </select>
+              <i class="fa-solid fa-chevron-down select-chevron" aria-hidden="true"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="ios-form-field">
+          <span class="ios-label">Occasions</span>
+          <div class="checkbox-pill-grid">
+            <label class="checkbox-pill">
+              <input type="checkbox" name="occasions" value="casual" checked>
+              <span>Casual</span>
+            </label>
+            <label class="checkbox-pill">
+              <input type="checkbox" name="occasions" value="work">
+              <span>Work</span>
+            </label>
+            <label class="checkbox-pill">
+              <input type="checkbox" name="occasions" value="party">
+              <span>Party</span>
+            </label>
+            <label class="checkbox-pill">
+              <input type="checkbox" name="occasions" value="formal">
+              <span>Formal</span>
+            </label>
+            <label class="checkbox-pill">
+              <input type="checkbox" name="occasions" value="sporty">
+              <span>Sporty</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="sheet-action-row">
+          <button type="button" onclick="closeUploadModal()" class="glass-pill-btn cancel-btn">Cancel</button>
+          <button type="submit" class="glass-cta-btn submit-btn">Save to Wardrobe</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Style Profile Modal (Bottom Sheet on Mobile) -->
+  <!-- MODAL 2: Style Profile Sheet -->
   <div id="profile-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title">
-    <div class="modal-card">
+    <div class="modal-glass-sheet">
       <div class="sheet-grabber" aria-hidden="true"></div>
-      <div class="modal-header">
-        <h2 id="profile-modal-title">Style profile</h2>
-        <button type="button" onclick="closeProfileModal()" class="icon-button modal-close" aria-label="Close dialog">
+
+      <div class="modal-sheet-header">
+        <h2 id="profile-modal-title" class="sheet-title">Style Profile</h2>
+        <button type="button" onclick="closeProfileModal()" class="glass-icon-btn close-btn" aria-label="Close dialog">
           <i class="fa-solid fa-xmark" aria-hidden="true"></i>
         </button>
       </div>
 
-      <form id="profile-form" onsubmit="saveProfile(event)" class="modal-form">
-        <div class="form-field">
-          <label class="field-label" for="profile-name">Your name</label>
-          <input id="profile-name" type="text" maxlength="60" placeholder="e.g. Alex" class="form-control">
+      <form id="profile-form" class="sheet-form" onsubmit="handleProfileSave(event)">
+        <div class="ios-form-field">
+          <label class="ios-label" for="profile-name">Your Name</label>
+          <input type="text" id="profile-name" placeholder="e.g. Alex Rivera" class="ios-input">
         </div>
-        <div class="form-field">
-          <label class="field-label" for="profile-style">Preferred aesthetic</label>
-          <select id="profile-style" class="form-control">
-            <option value="any">No preference</option>
-            <option value="minimal">Minimal &amp; clean</option>
-            <option value="classic">Classic tailoring</option>
-            <option value="casual">Relaxed casual</option>
-            <option value="streetwear">Streetwear</option>
-            <option value="sporty">Sport &amp; active</option>
-            <option value="formal">Smart &amp; formal</option>
-          </select>
+
+        <div class="ios-form-field">
+          <label class="ios-label" for="profile-style">Aesthetic Preference</label>
+          <input type="text" id="profile-style" placeholder="e.g. Minimal, Scandinavian, Relaxed Tailoring" class="ios-input">
         </div>
-        <div class="form-field">
-          <label class="field-label" for="profile-colors">Favorite tones</label>
-          <input id="profile-colors" type="text" maxlength="120" placeholder="e.g. olive, ecru, navy" class="form-control">
+
+        <div class="ios-form-field">
+          <label class="ios-label" for="profile-colors">Favored Colors</label>
+          <input type="text" id="profile-colors" placeholder="e.g. Navy, Ecru, Olive, Charcoal" class="ios-input">
         </div>
-        <div class="form-field">
-          <label class="field-label" for="profile-avoid">Avoid in outfits</label>
-          <input id="profile-avoid" type="text" maxlength="160" placeholder="e.g. neon, caps, loud graphics" class="form-control">
+
+        <div class="ios-form-field">
+          <label class="ios-label" for="profile-avoid">Avoided Items / Tones</label>
+          <input type="text" id="profile-avoid" placeholder="e.g. Bright neons, skinny jeans" class="ios-input">
         </div>
-        <div class="form-field">
-          <label class="field-label" for="profile-notes">Stylist guidance</label>
-          <textarea id="profile-notes" rows="3" maxlength="500" placeholder="e.g. Keep cuts relaxed, prefer clean monochromatic looks." class="form-control"></textarea>
+
+        <div class="ios-form-field">
+          <label class="ios-label" for="profile-notes">Stylist Notes</label>
+          <textarea id="profile-notes" rows="3" maxlength="500" placeholder="e.g. Focus on versatile smart casual pairings for everyday." class="ios-textarea"></textarea>
         </div>
+
         <p id="profile-save-status" class="save-status hidden" role="status">Profile saved.</p>
-        <div class="modal-actions">
-          <button type="button" onclick="closeProfileModal()" class="button button-secondary">Cancel</button>
-          <button type="submit" class="button button-primary">Save profile</button>
+
+        <div class="sheet-action-row">
+          <button type="button" onclick="closeProfileModal()" class="glass-pill-btn cancel-btn">Cancel</button>
+          <button type="submit" class="glass-cta-btn submit-btn">Save Profile</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Signin Benefits Modal (Bottom Sheet on Mobile) -->
+  <!-- MODAL 3: Clerk Auth Benefits Sheet -->
   <div id="auth-benefits-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
-    <div class="modal-card" style="max-width: 480px; text-align: center;">
+    <div class="modal-glass-sheet auth-sheet">
       <div class="sheet-grabber" aria-hidden="true"></div>
-      <div class="modal-header" style="justify-content: center; position: relative;">
-        <h2 id="auth-modal-title" style="font-family: var(--font-display); font-size: 1.85rem; font-style: italic;">Unlock your full wardrobe</h2>
-        <button type="button" onclick="closeAuthBenefitsModal()" class="icon-button modal-close" style="position: absolute; right: 0;" aria-label="Close dialog">
+
+      <div class="modal-sheet-header center-header">
+        <h2 id="auth-modal-title" class="sheet-title">Sync Across Devices</h2>
+        <button type="button" onclick="closeAuthBenefitsModal()" class="glass-icon-btn close-btn" aria-label="Close dialog">
           <i class="fa-solid fa-xmark" aria-hidden="true"></i>
         </button>
       </div>
-      <p style="color: var(--muted); font-size: 0.92rem; margin-top: 4px; margin-bottom: 22px; line-height: 1.45;">Sync your pieces across your phone, tablet, and computer with unlimited AI styling.</p>
+      <p class="auth-sheet-sub">Create your account to unlock private cloud sync and AI styling.</p>
 
-      <div style="display: grid; gap: 12px; text-align: left; margin-bottom: 24px;">
-        <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--surface-soft); border: 1px solid var(--line);">
-          <i class="fa-solid fa-cloud-arrow-up" style="color: var(--accent); font-size: 1.15rem; margin-top: 2px;"></i>
-          <div>
-            <div style="font-weight: 600; font-size: 0.88rem; color: var(--ink);">Cloud sync across devices</div>
-            <div style="font-size: 0.78rem; color: var(--muted);">Access your closet from any phone or computer with seamless sync.</div>
+      <div class="benefits-glass-list">
+        <div class="benefit-item">
+          <div class="benefit-glyph">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+          </div>
+          <div class="benefit-copy">
+            <div class="benefit-title">Cross-Device Sync</div>
+            <div class="benefit-desc">Access your closet anytime on your phone, tablet, and computer.</div>
           </div>
         </div>
-        <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--surface-soft); border: 1px solid var(--line);">
-          <i class="fa-solid fa-wand-magic-sparkles" style="color: var(--accent); font-size: 1.15rem; margin-top: 2px;"></i>
-          <div>
-            <div style="font-weight: 600; font-size: 0.88rem; color: var(--ink);">Unlimited AI outfit pairings</div>
-            <div style="font-size: 0.78rem; color: var(--muted);">Intelligent outfit recommendations tailored to occasions and weather.</div>
+
+        <div class="benefit-item">
+          <div class="benefit-glyph">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+          </div>
+          <div class="benefit-copy">
+            <div class="benefit-title">Unlimited AI Stylist</div>
+            <div class="benefit-desc">Get intelligent look recommendations customized to your profile.</div>
           </div>
         </div>
-        <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--surface-soft); border: 1px solid var(--line);">
-          <i class="fa-solid fa-shield-halved" style="color: var(--accent); font-size: 1.15rem; margin-top: 2px;"></i>
-          <div>
-            <div style="font-weight: 600; font-size: 0.88rem; color: var(--ink);">Private Cloudinary storage</div>
-            <div style="font-size: 0.78rem; color: var(--muted);">Your garment photos stay in your private folder and never merge with others.</div>
+
+        <div class="benefit-item">
+          <div class="benefit-glyph">
+            <i class="fa-solid fa-shield-halved"></i>
+          </div>
+          <div class="benefit-copy">
+            <div class="benefit-title">Private Cloudinary Folder</div>
+            <div class="benefit-desc">Garment photos stay strictly isolated to your personal account.</div>
           </div>
         </div>
       </div>
 
-      <div id="clerk-sign-in-mount">
-        <button type="button" id="clerk-auth-submit-btn" onclick="triggerClerkSignIn()" class="button button-primary" style="width: 100%; justify-content: center; padding: 13px 20px; font-size: 0.92rem;">
-          <i class="fa-solid fa-arrow-right-to-bracket"></i>
+      <div id="clerk-sign-in-mount" class="clerk-mount-container">
+        <button type="button" id="clerk-auth-submit-btn" onclick="triggerClerkSignIn()" class="glass-cta-btn full-width-btn">
+          <i class="fa-solid fa-arrow-right-to-bracket" aria-hidden="true"></i>
           <span>Sign In / Create Account</span>
         </button>
       </div>
 
-      <button type="button" onclick="closeAuthBenefitsModal()" class="button" style="background: none; border: none; color: var(--quiet); font-size: 0.82rem; margin-top: 14px; cursor: pointer;">
+      <button type="button" onclick="closeAuthBenefitsModal()" class="glass-text-btn guest-dismiss-btn">
         Continue as guest for now
       </button>
     </div>
   </div>
-
-  <footer class="site-footer">
-    <div class="footer-inner">
-      <span>E-Wardrobe &middot; A considered wardrobe</span>
-      <a href="https://zamindev.vercel.app" target="_blank" rel="noopener noreferrer">Designed by zamin.dev <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
-      <a href="https://www.instagram.com/zamin.ceo/" target="_blank" rel="noopener noreferrer" aria-label="Follow zamin.ceo on Instagram"><i class="fa-brands fa-instagram" aria-hidden="true"></i>zamin.ceo</a>
-    </div>
-  </footer>
 
   <script src="index.js"></script>
 </body>

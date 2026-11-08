@@ -1,86 +1,88 @@
-# E-Wardrobe Design System — Mobile-First Editorial
+# Apple Liquid Glass Design System (E-Wardrobe)
 
-A photo-first digital wardrobe and AI stylist interface designed from the small mobile screen up, blending the tactile elegance of print fashion magazines with the frictionless speed of modern software.
+A native mobile-first interface inspired by Apple's Human Interface Guidelines (HIG) and Expo Liquid Glass. The UI feels like an installed iOS/iPadOS app, replacing traditional web marketing sections with focused app views, a floating liquid glass dock, tactile micro-interactions, and layered optical depth.
 
-## 1. Visual Direction & Aesthetic
-- **Philosophy**: The garment is the hero. UI chrome recedes into hairline borders, generous negative space, and quiet alabaster surfaces.
-- **Inspiration**: High-end fashion editorial lookbooks (SSENSE, The Row, Apple product tiles, Resend typography).
-- **Core Voice**: Unhurried, confident, human editorial tone. No artificial buzzwords or generic template styling.
+---
+
+## 1. Core Principles
+
+1. **App-First Architecture**: No marketing hero banners, no promotional taglines, no endless web scrolling. The user is immediately in their active workspace.
+2. **True View Switching (Tabs)**: Screens for **Closet**, **Stylist**, and **Palette** switch fluidly via the floating Liquid Glass dock and iPad-style segmented control.
+3. **Expo Liquid Glass Materiality**:
+   - Ultra-dense backdrop blur: `backdrop-filter: blur(32px) saturate(200%)`.
+   - Optical specularity: Inset 1px light reflections (`inset 0 1px 1px rgba(255,255,255,0.4)`).
+   - Micro-borders: 1px semi-transparent borders defining physical edges.
+   - Ambient illumination: Subtle background mesh gradients refract through floating glass surfaces.
+4. **Native iOS Proportions & Feedback**:
+   - Interactive elements have an active press scale (`transform: scale(0.96)`).
+   - Bottom sheets feature an authentic iOS grabber capsule (`38px × 5px`) and spring transitions (`cubic-bezier(0.32, 0.72, 0, 1)`).
+   - Touch targets are strictly $\ge 44 \times 44\text{px}$.
+
+---
 
 ## 2. Design Tokens
 
-### Colors
+### Color Palette
 
-#### Light Mode (Alabaster Gallery)
+#### Light Mode (Apple Ceramic & Frosted Glass)
+- **Canvas / Background**: `#f2f4f8` with ambient liquid meshes (soft indigo & azure radial highlights)
+- **Glass Card Fill**: `rgba(255, 255, 255, 0.72)`
+- **Glass Floating Fill**: `rgba(255, 255, 255, 0.82)`
+- **Glass Border**: `1px solid rgba(255, 255, 255, 0.65)`
+- **Glass Specular Inset**: `inset 0 1px 1px 0 rgba(255, 255, 255, 0.9)`
+- **Text Primary (Ink)**: `#1d1d1f`
+- **Text Secondary (Muted)**: `#86868b`
+- **Text Tertiary (Quiet)**: `#a1a1a6`
+- **Action Blue (iOS System)**: `#0071e3`
+- **Action Blue Gradient**: `linear-gradient(135deg, #0071e3 0%, #2997ff 100%)`
+- **Accent Indigo**: `#6366f1`
+- **Danger**: `#ff3b30`
+
+#### Dark Mode (Deep OLED Midnight Glass)
+- **Canvas / Background**: `#0a0b10` with deep liquid ambient glows (indigo `#6366f118` & sky `#0ea5e912`)
+- **Glass Card Fill**: `rgba(22, 24, 34, 0.68)`
+- **Glass Floating Fill**: `rgba(30, 34, 48, 0.78)`
+- **Glass Border**: `1px solid rgba(255, 255, 255, 0.12)`
+- **Glass Specular Inset**: `inset 0 1px 1px 0 rgba(255, 255, 255, 0.16)`
+- **Text Primary (Ink)**: `#f5f5f7`
+- **Text Secondary (Muted)**: `#a1a1a6`
+- **Text Tertiary (Quiet)**: `#6e6e73`
+- **Action Blue (iOS System)**: `#2997ff`
+- **Action Blue Gradient**: `linear-gradient(135deg, #0071e3 0%, #0091ff 100%)`
+
+---
+
+## 3. Typography (Apple SF Pro Stack)
+
 ```css
---canvas: #faf9f6;          /* Warm alabaster canvas */
---surface: #ffffff;         /* Pure white cards and panels */
---surface-soft: #f3f1e9;    /* Subdued input fields and secondary chips */
---surface-float: rgba(255, 255, 255, 0.88); /* Frosted floating dock & headers */
---ink: #141514;             /* Deep charcoal black for crisp contrast */
---muted: #646660;           /* Secondary copy and subtitles */
---quiet: #989a93;           /* Captions and placeholders */
---line: rgba(20, 21, 20, 0.08); /* Hairline borders */
---line-strong: rgba(20, 21, 20, 0.16); /* Active / hover borders */
---accent: #1e3a2b;          /* Heritage forest green */
---accent-hover: #15291e;    /* Deep forest hover */
---accent-soft: rgba(30, 58, 43, 0.08); /* Selected states & active chips */
---accent-ink: #ffffff;      /* Contrast text on accent */
---danger: #b91c1c;          /* Crimson delete actions */
---danger-soft: #fef2f2;
+--font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+--font-mono: "SF Mono", Menlo, Consolas, Monaco, monospace;
 ```
 
-#### Dark Mode (Obsidian Noir)
-```css
-[data-theme="dark"] {
-  --canvas: #0c0e0d;        /* Deep obsidian canvas */
-  --surface: #141716;       /* Elevated dark charcoal cards */
-  --surface-soft: #1a1e1c;  /* Contrast chips & inputs */
-  --surface-float: rgba(20, 23, 22, 0.88); /* Frosted dark headers & docks */
-  --ink: #f5f6f5;           /* Off-white crisp text */
-  --muted: #959b97;         /* Soft secondary text */
-  --quiet: #5e6460;         /* Subdued tertiary metadata */
-  --line: rgba(245, 246, 245, 0.08); /* Subtle hairline borders */
-  --line-strong: rgba(245, 246, 245, 0.16);
-  --accent: #4ade80;        /* Luminous jade accent */
-  --accent-hover: #22c55e;
-  --accent-soft: rgba(74, 222, 128, 0.12);
-  --accent-ink: #0c0e0d;
-  --danger: #f87171;
-  --danger-soft: rgba(248, 113, 113, 0.12);
-}
-```
+- **Large Title**: 32px / 1.15, Weight 700, Tracking `-0.03em`
+- **Title 2**: 22px / 1.25, Weight 600, Tracking `-0.02em`
+- **Headline**: 17px / 1.3, Weight 600, Tracking `-0.015em`
+- **Body**: 15px / 1.45, Weight 400, Tracking `-0.01em`
+- **Subheadline**: 13px / 1.4, Weight 500, Tracking `0`
+- **Caption**: 11px / 1.3, Weight 600, Tracking `0.02em`
 
-### Typography
+---
 
-- **Display & Headings**: `Instrument Serif`, `Georgia`, serif (italicized, elegant editorial weight).
-- **Interface & Body**: `Instrument Sans`, `-apple-system`, `BlinkMacSystemFont`, `Inter`, sans-serif.
+## 4. Components
 
-| Token | Size (clamp) | Weight | Line Height | Tracking | Use Case |
-|---|---|---|---|---|---|
-| `display-lg` | `clamp(2rem, 5vw, 3.25rem)` | 400 Italic | 1.08 | `-0.02em` | Page Title / Hero |
-| `display-md` | `clamp(1.5rem, 3.5vw, 2.25rem)` | 400 Italic | 1.15 | `-0.015em` | Section Titles |
-| `heading-sm` | `1.15rem` | 600 Sans | 1.3 | `-0.01em` | Card Titles / Modals |
-| `body-base` | `0.95rem` | 400 Sans | 1.5 | `0` | Descriptions / Notes |
-| `caption` | `0.78rem` | 500 Sans | 1.4 | `0.03em` | Badges, Timestamps, Tags |
+### Floating Liquid Glass Dock
+- Capsule geometry (`border-radius: 9999px`) floating `18px` above bottom safe area.
+- Multi-layer shadow (`0 20px 48px -12px rgba(0,0,0,0.3)`).
+- Center "+" button elevated with subtle pulse and gradient fill.
+- Animated active indicator with sliding translucent glass pill.
 
-## 3. Mobile-First Layout & Touch Rules
+### Lookbook Photo Cards
+- Portrait ratio (3:4 or 4:5), 18px rounded corners.
+- Floating liquid glass badge on image top-left (category icon + label).
+- Color dot badge and wear count pill on top-right.
+- Bottom info banner with item title and quick wear incrementer.
 
-1. **Default Viewport (320px – 480px)**:
-   - **Floating Bottom Action Dock**: Sticky glass dock for immediate thumb reach (Closet, Stylist, Add Piece center button, Palette, Profile).
-   - **Safe Area Padding**: `env(safe-area-inset-bottom)` applied to prevent home bar collisions.
-   - **2-Column Wardrobe Grid**: `aspect-ratio: 3/4` portrait tiles with rounded corners (`14px`), subtle border, and integrated delete button.
-   - **Bottom Sheet Modals**: Slide-up sheet with pill grabber at the top (`border-radius: 24px 24px 0 0`), scrollable body, and sticky action buttons at the base.
-   - **Horizontal Inertia Scrolling**: Season & Category filter tracks with hidden scrollbars and smooth touch momentum.
-
-2. **Scaling to Tablet & Desktop**:
-   - `481px–767px`: 2-3 column fluid grid.
-   - `768px–1023px`: 3 column grid, modals convert to centered dialogs (`max-width: 520px`).
-   - `1024px+`: Split layout (60% Wardrobe Grid, 40% Sticky AI Stylist rail), 4 columns grid, floating bottom dock hides cleanly.
-   - `1440px+`: Max container `1380px` with generous side margins.
-
-## 4. Components & Micro-Interactions
-- **Buttons**: Minimum `44px` touch height on mobile. Subtle active transform `scale(0.98)` for tactile feedback.
-- **Badges**: Pill-shaped (`border-radius: 99px`), semibold `11px`, subtle background tint.
-- **Card Media**: Edge-to-edge images with `object-fit: cover` or clean centered containment on light surface with image hover micro-scale (`1.02`).
-- **Focus Rings**: Clean 2px outline with 2px offset for keyboard accessibility.
+### iOS Sheet Modals
+- Slide-up bottom sheet on viewport `< 768px` with top grabber (`38px × 5px`).
+- Spring enter/leave transition.
+- Centered liquid glass dialog on desktop (`max-width: 500px`, 26px radius).
