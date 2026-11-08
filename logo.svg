@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28" fill="none">
+  <defs>
+    <linearGradient id="wardrobeLogoGrad" x1="4" y1="4" x2="24" y2="21" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#a4c7b4" />
+      <stop offset="100%" stop-color="#6e937f" />
+    </linearGradient>
+  </defs>
+  <!-- Architectural Coat Hanger Hook -->
+  <path d="M13 6.5 C13 4.8 14.5 4 15.8 4 C17.3 4 18.5 5.2 18.5 6.8 C18.5 8.6 16.8 9.8 14 11 L14 12" stroke="url(#wardrobeLogoGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  <!-- Minimalist Hanger Frame -->
+  <path d="M14 12 L4.2 19.3 C3.4 19.9 3.8 21 4.8 21 L23.2 21 C24.2 21 24.6 19.9 23.8 19.3 L14 12 Z" stroke="url(#wardrobeLogoGrad)" stroke-width="2" stroke-linejoin="round" />
+  <!-- AI Stylist Sparkle Core -->
+  <path d="M14 14 C14 15.4 12.8 16.5 11.5 16.5 C12.8 16.5 14 17.6 14 19 C14 17.6 15.2 16.5 16.5 16.5 C15.2 16.5 14 15.4 14 14 Z" fill="url(#wardrobeLogoGrad)" />
+</svg>

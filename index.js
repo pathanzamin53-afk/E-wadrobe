@@ -1771,7 +1771,7 @@ const ONBOARDING_STEPS = [
     tab: "closet",
     targetSelector: null,
     badge: "Welcome",
-    icon: "fa-shapes",
+    icon: "fa-shirt",
     title: "Welcome to E-Wardrobe",
     description: "Your considered digital wardrobe and intelligent AI stylist. Catalog what you own, balance your palette, and discover tailored looks for every occasion.",
     showSkip: true,
