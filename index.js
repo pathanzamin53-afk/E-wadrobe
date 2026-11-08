@@ -440,11 +440,16 @@ function saveWardrobeToStorage() {
 }
 
 function resetToDefaultData() {
-  if (confirm("Clear all wardrobe items?")) {
-    wardrobeItems = [];
-    saveWardrobeToStorage();
-    renderWardrobeGrid();
-  }
+  showConfirmDialog({
+    title: "Clear All Pieces?",
+    description: "This will remove all pieces from your wardrobe.",
+    confirmLabel: "Clear All",
+    onConfirm: () => {
+      wardrobeItems = [];
+      saveWardrobeToStorage();
+      renderWardrobeGrid();
+    },
+  });
 }
 
 function updateBadgeCounts() {
@@ -540,11 +545,18 @@ function renderWardrobeGrid() {
 }
 
 function deleteItem(id) {
-  if (confirm("Delete this garment from wardrobe?")) {
-    wardrobeItems = wardrobeItems.filter((item) => item.id !== id);
-    saveWardrobeToStorage();
-    renderWardrobeGrid();
-  }
+  const item = wardrobeItems.find((it) => it.id === id);
+  const title = item && item.title ? `Remove "${item.title.slice(0, 26)}"?` : "Remove Garment?";
+  showConfirmDialog({
+    title: title,
+    description: "This piece will be permanently removed from your collection.",
+    confirmLabel: "Remove",
+    onConfirm: () => {
+      wardrobeItems = wardrobeItems.filter((it) => it.id !== id);
+      saveWardrobeToStorage();
+      renderWardrobeGrid();
+    },
+  });
 }
 
 /* ==========================================================================
