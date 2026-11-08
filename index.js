@@ -5,9 +5,15 @@
 const CLERK_PUBLISHABLE_KEY = "pk_test_ZXhhY3Qtd2FzcC02NjAyLmNsZXJrLmFjY291bnRzLmRldiQ";
 
 function handleClerkSignIn() {
-  if (window.Clerk) {
-    window.Clerk.openSignIn();
+  if (window.Clerk && typeof window.Clerk.openSignIn === "function") {
+    try {
+      window.Clerk.openSignIn();
+      return;
+    } catch (e) {
+      console.warn("Clerk modal open error:", e);
+    }
   }
+  window.location.href = "https://exact-wasp-6602.clerk.accounts.dev/sign-in?redirect_url=" + encodeURIComponent(window.location.href);
 }
 
 async function initClerk() {
