@@ -354,7 +354,13 @@ function updateProfileButton() {
     : "Your style profile";
 }
 
-function openProfileModal() {
+function openProfileModal(force = false) {
+  const isSignedIn = Boolean(window.Clerk?.user || (typeof clerkInstance !== "undefined" && clerkInstance?.user));
+  if (!isSignedIn && !force) {
+    openAuthBenefitsModal();
+    return;
+  }
+
   document.getElementById("profile-name").value = userProfile.name;
   document.getElementById("profile-style").value = userProfile.style;
   document.getElementById("profile-colors").value = userProfile.colors;
