@@ -1,3 +1,77 @@
+
+/* ==========================================================================
+   CLERK AUTHENTICATION INTEGRATION
+   ========================================================================== */
+const CLERK_PUBLISHABLE_KEY = "pk_test_ZXhhY3Qtd2FzcC02NjAyLmNsZXJrLmFjY291bnRzLmRldiQ";
+
+function handleClerkSignIn() {
+  if (window.Clerk) {
+    window.Clerk.openSignIn();
+  }
+}
+
+async function initClerk() {
+  const signInBtn = document.getElementById("clerk-sign-in-btn");
+  const userButtonDiv = document.getElementById("clerk-user-button");
+
+  if (!window.Clerk) {
+    const script = document.createElement("script");
+    script.setAttribute("data-clerk-publishable-key", CLERK_PUBLISHABLE_KEY);
+    script.async = true;
+    script.src = "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js";
+    document.head.appendChild(script);
+    await new Promise((resolve) => { script.onload = resolve; });
+  }
+
+  try {
+    await window.Clerk.load();
+    updateClerkAuthState(window.Clerk.user);
+
+    window.Clerk.addListener(({ user }) => {
+      updateClerkAuthState(user);
+    });
+  } catch (err) {
+    console.warn("Clerk initialization notice:", err);
+  }
+}
+
+function updateClerkAuthState(user) {
+  const signInBtn = document.getElementById("clerk-sign-in-btn");
+  const userButtonDiv = document.getElementById("clerk-user-button");
+
+  if (user) {
+    if (signInBtn) signInBtn.classList.add("hidden");
+    if (userButtonDiv) {
+      userButtonDiv.innerHTML = "";
+      window.Clerk.mountUserButton(userButtonDiv);
+    }
+
+    // Set storage keys scoped to this specific user ID
+    const userStorageKey = "e_wardrobe_items_" + user.id;
+    const userProfileKey = "e_wardrobe_profile_" + user.id;
+
+    // Migrate any items from guest mode into the user's account if empty
+    if (!localStorage.getItem(userStorageKey) && localStorage.getItem("e_wardrobe_items_v2")) {
+      const guestItems = localStorage.getItem("e_wardrobe_items_v2");
+      if (guestItems && guestItems !== "[]") {
+        localStorage.setItem(userStorageKey, guestItems);
+      }
+    }
+
+    STORAGE_KEY = userStorageKey;
+    PROFILE_STORAGE_KEY = userProfileKey;
+  } else {
+    if (signInBtn) signInBtn.classList.remove("hidden");
+    if (userButtonDiv) userButtonDiv.innerHTML = "";
+
+    STORAGE_KEY = "e_wardrobe_items_v2";
+    PROFILE_STORAGE_KEY = "e_wardrobe_profile_v1";
+  }
+
+  initClerk();
+  loadSavedWardrobe();
+  loadProfile();
+}
 function guessCategoryFromFilename(filename) {
   const name = String(filename || "").toLowerCase();
   if (/\b(jeans?|pants?|trousers?|shorts?|skirt|leggings?|chinos?|cargos?|bottoms?)\b/.test(name)) return "bottom";
@@ -9,8 +83,8 @@ function guessCategoryFromFilename(filename) {
 /* ==========================================================================
        1. INITIALIZATION & STATE MANAGEMENT (LOCAL STORAGE PERSISTENCE)
        ========================================================================== */
-const STORAGE_KEY = "e_wardrobe_items_v2";
-const PROFILE_STORAGE_KEY = "e_wardrobe_profile_v1";
+let STORAGE_KEY = "e_wardrobe_items_v2";
+let PROFILE_STORAGE_KEY = "e_wardrobe_profile_v1";
 const EMPTY_PROFILE = {
   name: "",
   style: "any",
@@ -1270,10 +1344,11 @@ async function previewSelectedImage(event) {
         let itemAdded = false;
 
         try {
+          const currentUserId = window.Clerk?.user?.id || "";
           const res = await fetch("/api/analyze-item", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ image: compressed }),
+            body: JSON.stringify({ image: compressed, userId: currentUserId }),
           });
           if (res.ok) {
             const data = await res.json();
@@ -1457,10 +1532,11 @@ async function handleFormSubmit(event) {
     const originalText = submitBtn ? submitBtn.innerText : "Save item";
     if (submitBtn) submitBtn.innerText = "Saving photo...";
     try {
+      const currentUserId = window.Clerk?.user?.id || "";
       const uploadRes = await fetch("/api/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: currentUploadedDataUrl }),
+        body: JSON.stringify({ image: currentUploadedDataUrl, userId: currentUserId }),
       });
       if (uploadRes.ok) {
         const uploadData = await uploadRes.json();

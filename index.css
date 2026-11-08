@@ -1542,3 +1542,27 @@ textarea.form-control {
         animation-iteration-count: 1 !important;
     }
 }
+/* ==========================================================================
+   CLERK AUTH STYLING
+   ========================================================================== */
+.clerk-auth-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.clerk-auth-container .sign-in-button {
+  gap: 6px;
+  height: 38px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 9px;
+  white-space: nowrap;
+}
+
+#clerk-user-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

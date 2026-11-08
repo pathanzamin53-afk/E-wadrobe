@@ -279,13 +279,16 @@ async function uploadToCloudinary(body, fetchImpl = globalThis.fetch) {
     return { url: image, warning: "Cloudinary credentials not configured; stored locally." };
   }
 
+  const userId = typeof body?.userId === "string" ? body.userId.replace(/[^a-zA-Z0-9_-]/g, "") : "";
+  const folder = userId ? `wardrobe/${userId}` : "wardrobe";
   const timestamp = Math.floor(Date.now() / 1000);
-  const toSign = `timestamp=${timestamp}${apiSecret}`;
+  const toSign = `folder=${folder}&timestamp=${timestamp}${apiSecret}`;
   const signature = createHash("sha1").update(toSign).digest("hex");
 
   const formData = new URLSearchParams();
   formData.append("file", image);
   formData.append("api_key", apiKey);
+  formData.append("folder", folder);
   formData.append("timestamp", String(timestamp));
   formData.append("signature", signature);
 
@@ -667,7 +670,7 @@ Return ONLY the raw JSON object.`;
 
   let finalImageUrl = base64DataUrl;
   try {
-    const cloudRes = await uploadToCloudinary({ image: base64DataUrl }, fetchImpl);
+    const cloudRes = await uploadToCloudinary({ image: base64DataUrl, userId: options.userId }, fetchImpl);
     if (cloudRes?.url) finalImageUrl = cloudRes.url;
   } catch (err) {
     // Keep local dataUrl
@@ -690,7 +693,7 @@ async function handleAnalyzeItem(request, response) {
   if (!payload?.image) {
     throw new RequestError(400, "Provide an image data URL to analyze.");
   }
-  const result = await analyzeGarmentImage(payload.image);
+  const result = await analyzeGarmentImage(payload.image, { userId: payload.userId });
   sendJson(response, 200, result);
 }
 

@@ -54,7 +54,7 @@ export default {
       if (!payload?.image) {
         throw new RequestError(400, "Provide an image data URL to analyze.");
       }
-      const result = await analyzeGarmentImage(payload.image);
+      const result = await analyzeGarmentImage(payload.image, { userId: payload.userId });
       return jsonResponse(200, result);
     } catch (error) {
       if (error instanceof RequestError) {
