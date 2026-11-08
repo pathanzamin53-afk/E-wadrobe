@@ -63,7 +63,7 @@ html.dark {
 
   --tap: 44px;
 
-  --navbar-h: 46px;
+  --navbar-h: 52px;
   --dock-h:   52px;
   --safe-b:   env(safe-area-inset-bottom, 0px);
   --safe-t:   env(safe-area-inset-top, 0px);
@@ -135,10 +135,10 @@ input, textarea { user-select: text; -webkit-user-select: text; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
   height: var(--navbar-h);
-  padding: 0 16px;
-  max-width: 600px;
+  padding: 0 20px;
+  max-width: 1240px;
   margin: 0 auto;
   width: 100%;
 }
@@ -348,9 +348,9 @@ html.dark .theme-dark-icon  { display: inline-block; color: #c8a96e; }
 .app-viewport {
   position: relative;
   z-index: 1;
-  max-width: 600px;
+  max-width: 1240px;
   margin: 0 auto;
-  padding: 10px 16px 0;
+  padding: 12px 20px 0;
   width: 100%;
 }
 
@@ -1364,9 +1364,9 @@ html.dark .theme-dark-icon  { display: inline-block; color: #c8a96e; }
   .desktop-add-btn       { display: inline-flex; }
   .liquid-glass-dock     { display: none; }   /* dock hidden: nav handles tabs */
   body.app-body          { padding-bottom: 24px; }
-  .navbar-inner          { height: 60px; padding: 0 24px; max-width: 900px; }
+  .navbar-inner          { height: 56px; padding: 0 28px; max-width: 1240px; }
   .ios-large-title       { font-size: 1.8rem; }
-  .app-viewport          { padding: 20px 24px 0; max-width: 900px; }
+  .app-viewport          { padding: 20px 28px 0; max-width: 1240px; }
 }
 
 /* ── DESKTOP: ≥ 1024px ─────────────────────────────────────────────────── */
