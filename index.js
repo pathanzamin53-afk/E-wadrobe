@@ -93,11 +93,12 @@ async function initClerk() {
       updateClerkAuthState(user);
     });
 
-    // Auto-popup sign-in benefits for guests after 1.5s
-    if (!clerk.user) {
+    // Auto-popup sign-in benefits ONLY if onboarding was already completed
+    // (For first-time users, it triggers smoothly after the tour finishes or is skipped)
+    if (!clerk.user && localStorage.getItem("e_wardrobe_onboarding_completed")) {
       setTimeout(() => {
         const hasSeenBenefits = sessionStorage.getItem("has_seen_auth_benefits");
-        if (!hasSeenBenefits) {
+        if (!hasSeenBenefits && (typeof isTourActive === "undefined" || !isTourActive)) {
           sessionStorage.setItem("has_seen_auth_benefits", "1");
           openAuthBenefitsModal();
         }
@@ -1989,6 +1990,18 @@ function finishOnboarding() {
   window.removeEventListener("resize", handleTourReposition);
   if (typeof switchTab === "function") {
     switchTab("closet");
+  }
+
+  // Trigger sign-up modal smoothly after the tour ends or gets skipped
+  const isSignedIn = Boolean(window.Clerk?.user || (typeof clerkInstance !== "undefined" && clerkInstance?.user));
+  if (!isSignedIn) {
+    const hasSeenBenefits = sessionStorage.getItem("has_seen_auth_benefits");
+    if (!hasSeenBenefits) {
+      sessionStorage.setItem("has_seen_auth_benefits", "1");
+      setTimeout(() => {
+        openAuthBenefitsModal();
+      }, 450);
+    }
   }
 }
 
