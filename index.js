@@ -252,6 +252,7 @@ window.addEventListener("DOMContentLoaded", () => {
   initTheme();
   drawColorWheel();
   initClerk();
+  initOnboarding();
   document.querySelectorAll(".modal-backdrop").forEach((modal) => {
     modal.addEventListener("click", (event) => {
       if (event.target !== modal) return;
@@ -1737,3 +1738,237 @@ function scrollToSection(id) {
 document.getElementById("item-color").addEventListener("input", (e) => {
   document.getElementById("color-hex-text").innerText = e.target.value;
 });
+
+
+/* ==========================================================================
+   8. INTERACTIVE ONBOARDING & GUIDED APP TOUR
+   ========================================================================== */
+const ONBOARDING_STORAGE_KEY = "e_wardrobe_onboarding_completed";
+
+const ONBOARDING_STEPS = [
+  {
+    id: "welcome",
+    tab: "closet",
+    targetSelector: null,
+    badge: "Welcome",
+    icon: "fa-shapes",
+    title: "Welcome to E-Wardrobe",
+    description: "Your considered digital wardrobe and intelligent AI stylist. Catalog what you own, balance your palette, and discover tailored looks for every occasion.",
+    showSkip: true,
+  },
+  {
+    id: "closet-filters",
+    tab: "closet",
+    targetSelector: ".filters-container",
+    badge: "Step 1 of 5 · Closet",
+    icon: "fa-shirt",
+    title: "Browse by Category & Season",
+    description: "Filter your collection with swift touch pills. Switch between Tops, Bottoms, Shoes, and Layers, or view pieces suited for Summer, Winter, and Rain.",
+    showSkip: true,
+  },
+  {
+    id: "add-pieces",
+    tab: "closet",
+    targetSelector: ".dock-add-center",
+    badge: "Step 2 of 5 · Quick Add",
+    icon: "fa-plus",
+    title: "Add & Multi-Photo Upload",
+    description: "Tap the center + to add garments. You can select multiple photos at once — built-in AI vision automatically identifies titles, categories, and colors.",
+    showSkip: true,
+  },
+  {
+    id: "stylist-studio",
+    tab: "stylist",
+    targetSelector: ".stylist-control-deck",
+    badge: "Step 3 of 5 · AI Stylist",
+    icon: "fa-wand-magic-sparkles",
+    title: "Curate Outfits for Any Occasion",
+    description: "Heading to work, date night, or casual weekend? Choose an occasion and tap Curate Outfits — the AI creates polished looks exclusively from what you own.",
+    showSkip: true,
+  },
+  {
+    id: "color-harmony",
+    tab: "palette",
+    targetSelector: ".palette-canvas-container",
+    badge: "Step 4 of 5 · Palette",
+    icon: "fa-palette",
+    title: "Tonal Balance & Color Spectrum",
+    description: "Explore the color harmony of your wardrobe. The interactive wheel calculates dominant tones and recommends balanced combinations.",
+    showSkip: true,
+  },
+  {
+    id: "profile-settings",
+    tab: "closet",
+    targetSelector: ".dock-item[data-tab='profile']",
+    badge: "Step 5 of 5 · Profile & Sync",
+    icon: "fa-user-check",
+    title: "Personalize & Cloud Sync",
+    description: "Tailor the AI to your aesthetic preferences in Profile, download JSON backups, or sign in to sync your wardrobe across all your devices.",
+    showSkip: false,
+    isFinal: true,
+  }
+];
+
+let currentOnboardingIndex = 0;
+let isTourActive = false;
+
+function initOnboarding() {
+  const completed = localStorage.getItem(ONBOARDING_STORAGE_KEY);
+  if (!completed) {
+    setTimeout(() => {
+      startOnboarding(false);
+    }, 700);
+  }
+}
+
+function startOnboarding(force = false) {
+  if (!force && localStorage.getItem(ONBOARDING_STORAGE_KEY)) return;
+  currentOnboardingIndex = 0;
+  isTourActive = true;
+  const overlay = document.getElementById("onboarding-overlay");
+  if (overlay) overlay.classList.remove("hidden");
+  renderOnboardingStep(currentOnboardingIndex);
+
+  window.removeEventListener("resize", handleTourReposition);
+  window.addEventListener("resize", handleTourReposition);
+}
+
+function handleTourReposition() {
+  if (!isTourActive) return;
+  positionTourStep(ONBOARDING_STEPS[currentOnboardingIndex]);
+}
+
+function renderOnboardingStep(index) {
+  if (index < 0 || index >= ONBOARDING_STEPS.length) return;
+  currentOnboardingIndex = index;
+  const step = ONBOARDING_STEPS[index];
+  const card = document.getElementById("onboarding-card");
+  if (!card) return;
+
+  if (typeof switchTab === "function" && step.tab) {
+    switchTab(step.tab);
+  }
+
+  const isFinal = index === ONBOARDING_STEPS.length - 1;
+  const isFirst = index === 0;
+
+  // Build Dots HTML (excluding welcome step)
+  const dotsHtml = ONBOARDING_STEPS.map((_, i) =>
+    `<span class="tour-dot ${i === index ? "active" : ""}"></span>`
+  ).join("");
+
+  card.innerHTML = `
+    <div class="tour-header">
+      <span class="tour-badge">
+        <i class="fa-solid ${step.icon}" aria-hidden="true"></i>
+        <span>${step.badge}</span>
+      </span>
+      ${step.showSkip ? '<button type="button" onclick="skipOnboarding()" class="tour-skip-btn">Skip tour</button>' : ''}
+    </div>
+
+    <div class="tour-body">
+      <h3 class="tour-title">${escapeHTML(step.title)}</h3>
+      <p class="tour-desc">${escapeHTML(step.description)}</p>
+    </div>
+
+    <div class="tour-footer">
+      <div class="tour-dots">
+        ${dotsHtml}
+      </div>
+      <div class="tour-actions">
+        ${!isFirst ? '<button type="button" onclick="prevOnboardingStep()" class="tour-back-btn">Back</button>' : ''}
+        <button type="button" onclick="nextOnboardingStep()" class="tour-next-btn">
+          <span>${isFinal ? "Finish" : isFirst ? "Start Tour" : "Next"}</span>
+          <i class="fa-solid ${isFinal ? "fa-check" : "fa-arrow-right"}" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+  `;
+
+  setTimeout(() => {
+    positionTourStep(step);
+  }, 40);
+}
+
+function positionTourStep(step) {
+  const overlay = document.getElementById("onboarding-overlay");
+  const spotlight = document.getElementById("onboarding-spotlight");
+  const card = document.getElementById("onboarding-card");
+  if (!overlay || !card) return;
+
+  if (!step.targetSelector) {
+    // Centered Welcome Dialog
+    overlay.classList.add("no-spotlight");
+    card.style.top = "50%";
+    card.style.bottom = "auto";
+    card.style.left = "50%";
+    card.style.transform = "translate(-50%, -50%)";
+    return;
+  }
+
+  const target = document.querySelector(step.targetSelector);
+  if (!target) {
+    overlay.classList.add("no-spotlight");
+    card.style.top = "50%";
+    card.style.bottom = "auto";
+    card.style.left = "50%";
+    card.style.transform = "translate(-50%, -50%)";
+    return;
+  }
+
+  overlay.classList.remove("no-spotlight");
+  const rect = target.getBoundingClientRect();
+
+  if (spotlight) {
+    const pad = 5;
+    spotlight.style.left = Math.max(0, rect.left - pad) + "px";
+    spotlight.style.top = Math.max(0, rect.top - pad) + "px";
+    spotlight.style.width = (rect.width + pad * 2) + "px";
+    spotlight.style.height = (rect.height + pad * 2) + "px";
+  }
+
+  card.style.left = "50%";
+  card.style.transform = "translateX(-50%)";
+
+  const winHeight = window.innerHeight;
+  // If target is in the lower half of viewport (e.g. bottom dock)
+  if (rect.top > winHeight * 0.5) {
+    card.style.top = "auto";
+    const bottomSpace = winHeight - rect.top + 12;
+    card.style.bottom = Math.min(winHeight - 200, bottomSpace) + "px";
+  } else {
+    // Target is in upper half (e.g. filters)
+    card.style.bottom = "auto";
+    const topSpace = rect.bottom + 12;
+    card.style.top = Math.min(winHeight - 240, topSpace) + "px";
+  }
+}
+
+function nextOnboardingStep() {
+  if (currentOnboardingIndex < ONBOARDING_STEPS.length - 1) {
+    renderOnboardingStep(currentOnboardingIndex + 1);
+  } else {
+    finishOnboarding();
+  }
+}
+
+function prevOnboardingStep() {
+  if (currentOnboardingIndex > 0) {
+    renderOnboardingStep(currentOnboardingIndex - 1);
+  }
+}
+
+function skipOnboarding() {
+  finishOnboarding();
+}
+
+function finishOnboarding() {
+  isTourActive = false;
+  localStorage.setItem(ONBOARDING_STORAGE_KEY, "true");
+  const overlay = document.getElementById("onboarding-overlay");
+  if (overlay) overlay.classList.add("hidden");
+  window.removeEventListener("resize", handleTourReposition);
+  if (typeof switchTab === "function") {
+    switchTab("closet");
+  }
+}
