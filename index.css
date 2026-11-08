@@ -3,109 +3,47 @@
    Mobile-first. Designed entirely for 320px up.
    ========================================================================== */
 
-/* ── DESIGN TOKENS ─────────────────────────────────────────────────────── */
-:root {
+/* ── DESIGN TOKENS (PURE DARK OLED · EXPO LIQUID GLASS) ───────────────── */
+:root,
+.dark,
+[data-theme="dark"],
+html.dark {
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
           "Helvetica Neue", system-ui, sans-serif;
   --mono: "SF Mono", "Fira Code", Menlo, monospace;
 
-  /* ── LIGHT: Warm Stone + Sage Glass ── */
-  --bg:            #f0ede8;        /* warm stone canvas */
-  --bg-alt:        #e8e4de;        /* slightly deeper stone */
-  --bg-blur:       rgba(240,237,232,0.80);
+  /* ── PURE MIDNIGHT OLED + MUTED SAGE LIQUID GLASS ── */
+  --bg:        #12110f;
+  --bg-alt:    #191816;
+  --bg-blur:   rgba(18,17,15,0.85);
 
-  /* Liquid glass surfaces */
-  --glass:         rgba(255,255,255,0.52);
-  --glass-mid:     rgba(255,255,255,0.68);
-  --glass-high:    rgba(255,255,255,0.84);
-  --glass-input:   rgba(255,255,255,0.46);
-  --glass-pill:    rgba(255,255,255,0.56);
-
-  /* Glass border & specular */
-  --border:        rgba(0,0,0,0.07);
-  --border-mid:    rgba(0,0,0,0.11);
-  --specular:      inset 0 1px 0 rgba(255,255,255,0.90);
-
-  /* Type hierarchy — muted warm grey */
-  --ink:           #2b2724;        /* primary text */
-  --ink-2:         #6b6460;        /* secondary */
-  --ink-3:         #9a918c;        /* tertiary */
-  --ink-4:         #c4bdb8;        /* quaternary / divider */
-
-  /* Accent — desaturated sage-indigo, NOT loud blue */
-  --accent:        #5a7a6a;        /* muted sage green */
-  --accent-mid:    #4a6a5a;
-  --accent-glow:   rgba(90,122,106,0.25);
-  --accent-bg:     rgba(90,122,106,0.10);
-  --accent-border: rgba(90,122,106,0.28);
-
-  /* System semantic */
-  --danger:        #b05050;
-  --success:       #5a8060;
-
-  /* Ambient mesh glows (very subtle, NOT neon) */
-  --glow-a:  rgba(160,152,140,0.22);   /* warm grey */
-  --glow-b:  rgba(130,148,138,0.18);   /* sage */
-  --glow-c:  rgba(176,160,148,0.14);   /* blush stone */
-
-  /* Shadows */
-  --shadow-xs:  0 1px 3px rgba(0,0,0,0.06);
-  --shadow-sm:  0 2px 8px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md:  0 8px 24px rgba(0,0,0,0.09), 0 2px 6px rgba(0,0,0,0.05);
-  --shadow-lg:  0 20px 48px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
-  --shadow-xl:  0 32px 72px rgba(0,0,0,0.16), 0 8px 24px rgba(0,0,0,0.08);
-  --shadow-dock: 0 16px 48px rgba(0,0,0,0.14),
-                 0 2px 8px  rgba(0,0,0,0.08),
-                 0 0 0 1px  rgba(255,255,255,0.60);
-
-  /* Geometry */
-  --r-xs:   8px;
-  --r-sm:   12px;
-  --r-md:   16px;
-  --r-lg:   22px;
-  --r-xl:   28px;
-  --r-pill: 9999px;
-
-  /* iOS-spec touch */
-  --tap: 44px;
-
-  /* Navbar & dock heights (all mobile-first) */
-  --navbar-h: 56px;
-  --dock-h:   72px;
-  --safe-b:   env(safe-area-inset-bottom, 0px);
-  --safe-t:   env(safe-area-inset-top, 0px);
-}
-
-/* ── DARK MODE ─────────────────────────────────────────────────────────── */
-.dark, [data-theme="dark"], html.dark {
-  --bg:        #131210;
-  --bg-alt:    #1a1917;
-  --bg-blur:   rgba(19,18,16,0.82);
-
-  --glass:     rgba(32,30,27,0.62);
-  --glass-mid: rgba(42,40,36,0.72);
-  --glass-high:rgba(52,50,46,0.88);
-  --glass-input:rgba(28,27,24,0.60);
+  --glass:      rgba(30,28,25,0.65);
+  --glass-mid:  rgba(40,38,34,0.76);
+  --glass-high: rgba(50,48,44,0.90);
+  --glass-input:rgba(26,25,22,0.68);
   --glass-pill: rgba(255,255,255,0.08);
 
-  --border:    rgba(255,255,255,0.07);
-  --border-mid:rgba(255,255,255,0.12);
-  --specular:  inset 0 1px 0 rgba(255,255,255,0.12);
+  --border:    rgba(255,255,255,0.08);
+  --border-mid:rgba(255,255,255,0.13);
+  --specular:  inset 0 1px 0 rgba(255,255,255,0.14);
 
   --ink:   #f0ece6;
-  --ink-2: #a09890;
-  --ink-3: #706860;
-  --ink-4: #40383380;
+  --ink-2: #a29a92;
+  --ink-3: #726a62;
+  --ink-4: rgba(255,255,255,0.09);
 
   --accent:        #7a9e8a;
   --accent-mid:    #6a8e7a;
-  --accent-glow:   rgba(122,158,138,0.30);
+  --accent-glow:   rgba(122,158,138,0.28);
   --accent-bg:     rgba(122,158,138,0.12);
-  --accent-border: rgba(122,158,138,0.30);
+  --accent-border: rgba(122,158,138,0.28);
 
-  --glow-a: rgba(100,96,88,0.30);
-  --glow-b: rgba(90,110,100,0.24);
-  --glow-c: rgba(120,105,95,0.20);
+  --danger:        #c25e5e;
+  --success:       #7a9e8a;
+
+  --glow-a: rgba(90,86,78,0.25);
+  --glow-b: rgba(80,105,95,0.22);
+  --glow-c: rgba(110,95,85,0.18);
 
   --shadow-xs:  0 1px 3px rgba(0,0,0,0.30);
   --shadow-sm:  0 2px 8px rgba(0,0,0,0.35);
@@ -115,6 +53,20 @@
   --shadow-dock: 0 20px 56px rgba(0,0,0,0.65),
                  0 2px 8px  rgba(0,0,0,0.40),
                  0 0 0 1px  rgba(255,255,255,0.08);
+
+  --r-xs:   8px;
+  --r-sm:   12px;
+  --r-md:   16px;
+  --r-lg:   22px;
+  --r-xl:   28px;
+  --r-pill: 9999px;
+
+  --tap: 44px;
+
+  --navbar-h: 58px;
+  --dock-h:   72px;
+  --safe-b:   env(safe-area-inset-bottom, 0px);
+  --safe-t:   env(safe-area-inset-top, 0px);
 }
 
 /* ── RESET ─────────────────────────────────────────────────────────────── */
@@ -194,8 +146,13 @@ input, textarea { user-select: text; -webkit-user-select: text; }
   display: flex;
   align-items: center;
   gap: 10px;
-  flex: 1;
-  min-width: 0;
+  flex-shrink: 0;
+}
+
+@media (max-width: 440px) {
+  .nav-stats-pill {
+    display: none;
+  }
 }
 
 .nav-brand {

@@ -1,13 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Wardrobe">
-  <meta name="theme-color" content="#f2f4f8" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0a0b10" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#131210">
   <meta name="description" content="A native iOS-inspired digital wardrobe and AI stylist powered by Expo Liquid Glass design.">
   <title>E-Wardrobe &mdash; Considered AI Stylist</title>
   
@@ -56,20 +55,8 @@
       </nav>
 
       <div class="navbar-right">
-        <!-- Quick Utility Actions -->
-        <div class="nav-action-group">
-          <button type="button" class="glass-icon-btn" onclick="exportWardrobeData()" aria-label="Export backup" title="Export wardrobe backup">
-            <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
-          </button>
-          <label class="glass-icon-btn file-upload-btn" aria-label="Import backup" title="Import wardrobe backup">
-            <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
-            <input type="file" id="import-file-input" accept=".json" class="visually-hidden" onchange="importWardrobeData(event)">
-          </label>
-          <button type="button" id="theme-toggle" class="glass-icon-btn" aria-label="Toggle dark/light theme" title="Toggle theme">
-            <i class="fa-regular fa-moon theme-light-icon" aria-hidden="true"></i>
-            <i class="fa-regular fa-sun theme-dark-icon" aria-hidden="true"></i>
-          </button>
-        </div>
+        <!-- Hidden Theme Toggle for ID preservation -->
+        <button type="button" id="theme-toggle" class="visually-hidden" aria-hidden="true"></button>
 
         <!-- Clerk Authentication Button & Avatar -->
         <div id="clerk-auth-container" class="clerk-container">
@@ -473,6 +460,21 @@
         <div class="ios-form-field">
           <label class="ios-label" for="profile-notes">Stylist Notes</label>
           <textarea id="profile-notes" rows="3" maxlength="500" placeholder="e.g. Focus on versatile smart casual pairings for everyday." class="ios-textarea"></textarea>
+        </div>
+
+        <div class="ios-form-field">
+          <span class="ios-label">Wardrobe Backup</span>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="glass-pill-btn" onclick="exportWardrobeData()" style="flex: 1; justify-content: center; height: 42px;" aria-label="Export wardrobe backup">
+              <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
+              <span>Export Data</span>
+            </button>
+            <label class="glass-pill-btn file-upload-btn" style="flex: 1; justify-content: center; height: 42px; cursor: pointer;" aria-label="Import wardrobe backup">
+              <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
+              <span>Import Data</span>
+              <input type="file" id="import-file-input" accept=".json" class="visually-hidden" onchange="importWardrobeData(event)">
+            </label>
+          </div>
         </div>
 
         <p id="profile-save-status" class="save-status hidden" role="status">Profile saved.</p>

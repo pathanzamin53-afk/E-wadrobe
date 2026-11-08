@@ -1685,30 +1685,10 @@ function importWardrobeData(event) {
        7. THEME MANAGER
        ========================================================================== */
 function initTheme() {
-  const themeToggleBtn = document.getElementById("theme-toggle");
-  const savedTheme = localStorage.getItem("e_wardrobe_theme");
-  const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-
-  if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
-    document.documentElement.classList.add("dark");
-  } else {
-    document.documentElement.classList.remove("dark");
-  }
-
-  if (themeToggleBtn) {
-    themeToggleBtn.setAttribute(
-      "aria-pressed",
-      String(document.documentElement.classList.contains("dark")),
-    );
-    themeToggleBtn.addEventListener("click", () => {
-      const isDark = document.documentElement.classList.toggle("dark");
-      localStorage.setItem("e_wardrobe_theme", isDark ? "dark" : "light");
-      themeToggleBtn.setAttribute("aria-pressed", String(isDark));
-      if (typeof drawColorWheel === "function") {
-        drawColorWheel();
-      }
-    });
-  }
+  // Pure dark mode exclusively
+  document.documentElement.classList.add("dark");
+  document.documentElement.setAttribute("data-theme", "dark");
+  localStorage.setItem("e_wardrobe_theme", "dark");
 }
 
 function switchTab(tabName) {
