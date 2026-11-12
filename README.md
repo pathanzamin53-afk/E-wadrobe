@@ -47,6 +47,14 @@ Then open <http://127.0.0.1:3000> in your browser.
 
 ---
 
+## UPI Payment & Referral Demo
+
+Set `UPI_ID` in `.env.local` (or as a deployment environment variable) to show the configured UPI ID and enable payment submission. The payment page displays the supplied Kotak QR image (`kotak-upi-qr.jpeg`); scan it and enter ₹99, or ₹49 with the owner's referral code, manually in the UPI app. The payer's UPI app will show the payee details before confirmation. Use a VPA that does not contain your phone number if you want to keep that number private. Set `ADMIN_PASSWORD` (at least 12 characters) and `ADMIN_SESSION_SECRET` (at least 32 random characters) there as well. One approved UPI payment unlocks unlimited wardrobe pieces. The customer submits a UTR; the admin must verify and approve it on `/admin.html` before unlimited Add Piece access is unlocked. The referral code is not displayed on the payment page and must be shared separately. The server keeps the password out of page code and uses an HttpOnly, SameSite session cookie that expires after 8 hours.
+
+This is a **local browser demo**: submissions and dashboard changes are stored in that browser's local storage, are not shared across devices, and do not verify payment receipts. Verify each UTR against your bank/UPI statement before approving it. The password protects normal dashboard access but cannot protect local-storage data from someone with access to the same browser/device or developer tools. Do not use this storage for production or real multi-customer operations; those require a shared database and authenticated admin access.
+
+---
+
 ## Supported Occasions
 * **Everyday (`casual`)**: Relaxed, comfortable everyday combinations.
 * **Streetwear (`streetwear`)**: Urban street fashion and statement pieces.

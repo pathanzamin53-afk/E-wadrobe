@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en" class="dark" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#120f0d">
+  <meta name="description" content="Local payment and referral review dashboard.">
+  <title>Payment & Referral Dashboard — E-Wardrobe</title>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/index.css">
+  <link rel="icon" type="image/png" href="/Favicon.png">
+  <style>
+    body { min-height: 100vh; padding: 24px 16px 48px; }
+    .dashboard-shell { position: relative; z-index: 1; width: min(100%, 1160px); margin: 0 auto; }
+    .dashboard-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 30px; }
+    .dashboard-top .nav-brand { width: fit-content; }
+    .dashboard-top nav { display: flex; gap: 8px; }
+    .dashboard-heading { margin-bottom: 22px; }
+    .dashboard-heading h1 { margin-bottom: 7px; font-size: clamp(1.8rem, 5vw, 2.6rem); letter-spacing: -.04em; }
+    .dashboard-heading p, .muted { color: var(--ink-2); line-height: 1.55; }
+    .local-notice { margin-bottom: 20px; padding: 14px 16px; border: 1px solid var(--danger-border); border-radius: var(--r-md); color: var(--ink-2); background: var(--danger-bg); font-size: .85rem; line-height: 1.55; }
+    .stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .stat-card, .panel { border: 1px solid var(--border-mid); border-radius: var(--r-lg); background: var(--glass-mid); box-shadow: var(--shadow-sm), var(--specular); backdrop-filter: blur(20px); }
+    .stat-card { min-height: 112px; padding: 18px; }
+    .stat-label { display: block; margin-bottom: 11px; color: var(--ink-2); font-size: .83rem; }
+    .stat-value { font-size: clamp(1.35rem, 3vw, 1.8rem); font-weight: 700; }
+    .panel { margin-bottom: 18px; padding: clamp(16px, 3vw, 22px); }
+    .panel-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .panel-heading h2 { font-size: 1.08rem; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 720px; text-align: left; }
+    th, td { padding: 12px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    th { color: var(--ink-2); font-size: .76rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+    td { font-size: .88rem; }
+    code { color: var(--ink); font-family: var(--mono); overflow-wrap: anywhere; }
+    .status { display: inline-flex; padding: 5px 9px; border-radius: var(--r-pill); font-size: .73rem; font-weight: 700; }
+    .status-pending { color: #ead9ad; background: rgba(136, 127, 100, .24); }
+    .status-approved { color: #d7edc1; background: rgba(74, 117, 61, .28); }
+    .status-rejected { color: #ffd2c9; background: var(--danger-bg); }
+    .actions { display: flex; gap: 7px; }
+    .action-btn { min-height: 36px; padding: 0 10px; border: 1px solid var(--border-mid); border-radius: var(--r-sm); color: var(--ink); background: var(--glass); font-size: .8rem; }
+    .action-btn:hover { background: var(--glass-high); }
+    .action-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .empty-state, .error-state { padding: 22px 10px; color: var(--ink-2); text-align: center; }
+    .filter-select { min-height: 38px; padding: 0 9px; border: 1px solid var(--border-mid); border-radius: var(--r-sm); color: var(--ink); background: var(--glass-input); }
+    .feedback { margin: 0 0 14px; color: var(--ink-2); font-size: .85rem; }
+    @media (max-width: 700px) { .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 420px) { .dashboard-top nav .glass-pill-btn { padding: 0 9px; font-size: .75rem; } .panel-heading { align-items: flex-start; flex-direction: column; } }
+  </style>
+</head>
+<body class="app-body">
+  <div class="ambient-glow glow-top-left" aria-hidden="true"></div>
+  <div class="ambient-glow glow-top-right" aria-hidden="true"></div>
+  <main id="dashboard-content" class="dashboard-shell" hidden>
+    <header class="dashboard-top">
+      <a class="nav-brand" href="/" aria-label="E-Wardrobe home"><span class="brand-title">E-Wardrobe</span></a>
+      <nav aria-label="Dashboard navigation">
+        <a class="glass-pill-btn" href="/payment.html"><i class="fa-solid fa-indian-rupee-sign" aria-hidden="true"></i><span>Payment page</span></a>
+        <a class="glass-pill-btn" href="/"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+        <button id="logout-button" class="glass-pill-btn" type="button"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i><span>Log out</span></button>
+      </nav>
+    </header>
+
+    <section class="dashboard-heading">
+      <h1>Referral dashboard</h1>
+      <p>Submitted UTRs review karein aur referral-code usage dekhein.</p>
+    </section>
+
+    <div class="local-notice">
+      <strong>Local demo only:</strong> payment/referral submissions browser ke local storage mein hain, isliye sirf isi browser/device par dikhengi. Login dashboard page ko protect karta hai, lekin local storage ko device ke doosre users ya developer tools se secure nahi karta. UTR ko apne bank/UPI statement se verify kiye bina approve na karein.
+    </div>
+
+    <section class="stats-grid" aria-label="Payment summary">
+      <article class="stat-card"><span class="stat-label">Total submissions</span><strong id="total-count" class="stat-value">—</strong></article>
+      <article class="stat-card"><span class="stat-label">Pending review</span><strong id="pending-count" class="stat-value">—</strong></article>
+      <article class="stat-card"><span class="stat-label">Approved amount</span><strong id="approved-amount" class="stat-value">—</strong></article>
+      <article class="stat-card"><span class="stat-label">Referral submissions</span><strong id="referral-count" class="stat-value">—</strong></article>
+    </section>
+
+    <section class="panel" aria-labelledby="referrals-title">
+      <div class="panel-heading">
+        <h2 id="referrals-title">Referral code performance</h2>
+      </div>
+      <p id="referral-empty" class="empty-state">Referral code use hone par stats yahan dikhenge.</p>
+      <div class="table-wrap">
+        <table id="referral-table" hidden>
+          <thead><tr><th>Referral code</th><th>Submissions</th><th>Pending</th><th>Approved amount</th></tr></thead>
+          <tbody id="referral-rows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="payments-title">
+      <div class="panel-heading">
+        <h2 id="payments-title">Payment submissions</h2>
+        <label class="muted" for="status-filter">Show
+          <select id="status-filter" class="filter-select">
+            <option value="ALL">All statuses</option>
+            <option value="PENDING">Pending</option>
+            <option value="APPROVED">Approved</option>
+            <option value="REJECTED">Rejected</option>
+          </select>
+        </label>
+      </div>
+      <p id="dashboard-feedback" class="feedback" role="status" aria-live="polite"></p>
+      <p id="payments-empty" class="empty-state">Abhi koi payment submission nahi hai.</p>
+      <div class="table-wrap">
+        <table id="payment-table" hidden>
+          <thead><tr><th>Order</th><th>Name</th><th>Purchase</th><th>Amount</th><th>UTR</th><th>Referral code</th><th>Submitted</th><th>Status / action</th></tr></thead>
+          <tbody id="payment-rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <script src="/admin.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en" class="dark" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#120f0d">
+  <title>Admin sign in — E-Wardrobe</title>
+  <link rel="stylesheet" href="/index.css">
+  <style>
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px 16px;
+    }
+    .login-card {
+      position: relative;
+      z-index: 1;
+      width: min(100%, 420px);
+      padding: 28px;
+      border: 1px solid var(--border-mid);
+      border-radius: var(--r-lg);
+      background: var(--glass-mid);
+      box-shadow: var(--shadow-lg), var(--specular);
+      backdrop-filter: blur(24px);
+    }
+    .login-card h1 {
+      margin: 22px 0 8px;
+      font-size: 1.65rem;
+    }
+    .login-card p {
+      color: var(--ink-2);
+      line-height: 1.55;
+    }
+    .login-card label {
+      display: block;
+      margin: 22px 0 8px;
+      color: var(--ink-2);
+      font-size: .88rem;
+      font-weight: 600;
+    }
+    .login-card input {
+      width: 100%;
+      min-height: 48px;
+      padding: 0 13px;
+      border: 1px solid var(--border-mid);
+      border-radius: var(--r-sm);
+      color: var(--ink);
+      background: var(--glass-input);
+      font-size: 1rem;
+    }
+    .login-card input:focus {
+      outline: 2px solid var(--accent-mid);
+      outline-offset: 1px;
+    }
+    .login-card button {
+      width: 100%;
+      min-height: 48px;
+      margin-top: 14px;
+      border-radius: var(--r-sm);
+      color: var(--ink);
+      background: var(--accent);
+      font-weight: 700;
+    }
+    .login-card button:disabled {
+      opacity: .6;
+      cursor: wait;
+    }
+    .login-message {
+      min-height: 24px;
+      margin-top: 12px;
+      color: #ffd2c9 !important;
+      font-size: .86rem; }
+    .login-home {
+      display: inline-flex;
+      min-height: 42px;
+      align-items: center;
+      gap: 8px;
+      color: var(--ink-2);
+      font-size: .88rem;
+    }
+  </style>
+</head>
+<body class="app-body">
+  <div class="ambient-glow glow-top-left" aria-hidden="true"></div>
+  <main class="login-card">
+    <a class="login-home" href="/"><span aria-hidden="true">←</span> E-Wardrobe</a>
+    <h1>Admin sign in</h1>
+    <p>Referral dashboard kholne ke liye admin password enter karein.</p>
+    <form id="admin-login-form">
+      <label for="admin-password">Admin password</label>
+      <input id="admin-password" name="password" type="password" autocomplete="current-password" maxlength="256" required>
+      <button id="login-button" type="submit">Sign in</button>
+      <p id="login-message" class="login-message" role="status" aria-live="polite"></p>
+    </form>
+  </main>
+  <script src="/admin-login.js" defer></script>
+</body>
+</html>

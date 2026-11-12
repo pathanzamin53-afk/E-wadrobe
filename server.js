@@ -2,6 +2,14 @@ const http = require("node:http");
 const { readFile } = require("node:fs/promises");
 const { extname, join, relative, resolve, sep } = require("node:path");
 const { createHash } = require("node:crypto");
+const {
+  clearAdminSessionCookie,
+  createAdminSessionCookie,
+  getAdminConfig,
+  hasAdminSession,
+  isAdminConfigValid,
+  verifyAdminPassword,
+} = require("./admin-auth");
 
 const ROOT = __dirname;
 const HOST = "127.0.0.1";
@@ -11,10 +19,17 @@ const API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const MAX_BODY_BYTES = 5 * 1024 * 1024;
 const MAX_ITEMS = 80;
 const ALLOWED_PUBLIC_FILES = new Set([
+  "admin.html",
+  "admin.js",
+  "admin-login.html",
+  "admin-login.js",
   "Favicon.png",
   "index.css",
   "index.html",
   "index.js",
+  "kotak-upi-qr.jpeg",
+  "payment.html",
+  "payment.js",
 ]);
 const VALID_CATEGORIES = new Set(["cap", "top", "bottom", "shoes", "layering"]);
 const VALID_SEASONS = new Set(["all", "summer", "winter", "rainy"]);
@@ -52,6 +67,11 @@ function sendJson(response, status, data) {
     "X-Content-Type-Options": "nosniff",
   });
   response.end(JSON.stringify(data));
+}
+
+function validUpiId(upiId) {
+  return typeof upiId === "string" &&
+    /^[A-Za-z0-9._-]{2,256}@[A-Za-z][A-Za-z0-9]{1,63}$/.test(upiId);
 }
 
 function validateInput(value) {
@@ -736,6 +756,7 @@ async function serveFile(request, response, pathname) {
       ".css": "text/css; charset=utf-8",
       ".html": "text/html; charset=utf-8",
       ".js": "text/javascript; charset=utf-8",
+      ".jpeg": "image/jpeg",
       ".png": "image/png",
     };
     response.writeHead(200, {
@@ -753,13 +774,87 @@ async function serveFile(request, response, pathname) {
   }
 }
 
+async function handleAdminAuth(request, response, config) {
+  if (!isAdminConfigValid(config)) {
+    sendJson(response, 503, {
+      error: "Admin login is not configured. Set ADMIN_PASSWORD and ADMIN_SESSION_SECRET.",
+    });
+    return;
+  }
+
+  if (request.method === "GET") {
+    sendJson(response, 200, {
+      authenticated: hasAdminSession(request, config),
+    });
+    return;
+  }
+
+  if (request.method === "POST") {
+    assertSameOrigin(request);
+    const body = await readRequestBody(request);
+    if (
+      !body ||
+      typeof body !== "object" ||
+      Array.isArray(body)
+    ) {
+      sendJson(response, 400, { error: "Send the password in a JSON object." });
+      return;
+    }
+    if (!verifyAdminPassword(body.password, config)) {
+      sendJson(response, 401, { error: "The password is incorrect." });
+      return;
+    }
+
+    response.writeHead(200, {
+      "Cache-Control": "no-store",
+      "Content-Type": "application/json; charset=utf-8",
+      "Set-Cookie": createAdminSessionCookie(request, config),
+      "X-Content-Type-Options": "nosniff",
+    });
+    response.end(JSON.stringify({ authenticated: true }));
+    return;
+  }
+
+  if (request.method === "DELETE") {
+    assertSameOrigin(request);
+    response.writeHead(200, {
+      "Cache-Control": "no-store",
+      "Content-Type": "application/json; charset=utf-8",
+      "Set-Cookie": clearAdminSessionCookie(request),
+      "X-Content-Type-Options": "nosniff",
+    });
+    response.end(JSON.stringify({ authenticated: false }));
+    return;
+  }
+
+  response.writeHead(405, {
+    Allow: "GET, POST, DELETE",
+    "Cache-Control": "no-store",
+    "Content-Type": "application/json; charset=utf-8",
+    "X-Content-Type-Options": "nosniff",
+  });
+  response.end(JSON.stringify({ error: "Use GET, POST, or DELETE for admin authentication." }));
+}
+
 function createServer({
   apiKey = process.env.GROQ_API_KEY,
   model = MODEL,
   fetchImpl = globalThis.fetch,
   provider,
+  upiId = process.env.UPI_ID,
+  adminPassword = process.env.ADMIN_PASSWORD,
+  adminSessionSecret = process.env.ADMIN_SESSION_SECRET,
 } = {}) {
-  const options = { apiKey, model, fetchImpl, provider };
+  const options = {
+    apiKey,
+    model,
+    fetchImpl,
+    provider,
+    upiId,
+    adminPassword,
+    adminSessionSecret,
+  };
+  const adminConfig = getAdminConfig(options);
 
   return http.createServer((request, response) => {
     response.setTimeout(25_000, () => {
@@ -780,7 +875,30 @@ function createServer({
     }
 
     let handleRequest;
-    if (requestUrl.pathname === "/api/outfits") {
+    if (requestUrl.pathname === "/api/admin-auth") {
+      handleRequest = handleAdminAuth(request, response, adminConfig);
+    } else if (requestUrl.pathname === "/api/payment-config") {
+      handleRequest = Promise.resolve().then(() => {
+        if (request.method !== "GET") {
+          response.writeHead(405, {
+            Allow: "GET",
+            "Cache-Control": "no-store",
+            "Content-Type": "application/json; charset=utf-8",
+            "X-Content-Type-Options": "nosniff",
+          });
+          response.end(JSON.stringify({ error: "Use GET for payment configuration." }));
+          return;
+        }
+
+        if (!validUpiId(options.upiId)) {
+          sendJson(response, 503, {
+            error: "UPI payments are not configured. Set a valid UPI_ID and restart the server.",
+          });
+          return;
+        }
+        sendJson(response, 200, { upiId: options.upiId });
+      });
+    } else if (requestUrl.pathname === "/api/outfits") {
       handleRequest = request.method === "POST"
         ? generateOutfits(request, response, options)
         : Promise.resolve().then(() => {
@@ -816,6 +934,18 @@ function createServer({
             });
             response.end(JSON.stringify({ error: "Use POST to analyze a garment image." }));
           });
+    } else if (
+      requestUrl.pathname === "/admin.html" &&
+      !hasAdminSession(request, adminConfig)
+    ) {
+      handleRequest = serveFile(request, response, "/admin-login.html");
+    } else if (
+      requestUrl.pathname === "/admin.js" &&
+      !hasAdminSession(request, adminConfig)
+    ) {
+      handleRequest = Promise.resolve().then(() => {
+        sendJson(response, 404, { error: "Not found." });
+      });
     } else {
       handleRequest = serveFile(request, response, requestUrl.pathname);
     }
@@ -862,4 +992,11 @@ module.exports = {
   MAX_BODY_BYTES,
   RequestError,
   assertSameOrigin,
+  isValidUpiId: validUpiId,
+  createAdminSessionCookie,
+  clearAdminSessionCookie,
+  getAdminConfig,
+  hasAdminSession,
+  isAdminConfigValid,
+  verifyAdminPassword,
 };

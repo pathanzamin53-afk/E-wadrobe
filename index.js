@@ -156,6 +156,7 @@ function guessCategoryFromFilename(filename) {
        ========================================================================== */
 let STORAGE_KEY = "e_wardrobe_items_v2";
 let PROFILE_STORAGE_KEY = "e_wardrobe_profile_v1";
+const PIECE_PAYMENTS_STORAGE_KEY = "ewardrobe.payments.v1";
 const EMPTY_PROFILE = {
   name: "",
   style: "any",
@@ -425,25 +426,80 @@ function loadSavedWardrobe() {
   updateBadgeCounts();
 }
 
+function getApprovedPiecePayments() {
+  const storedPayments = localStorage.getItem(PIECE_PAYMENTS_STORAGE_KEY);
+  if (!storedPayments) return [];
+  const payments = JSON.parse(storedPayments);
+  if (!Array.isArray(payments)) {
+    throw new Error("Saved payment records have an invalid format.");
+  }
+  return payments;
+}
+
+function hasUnlimitedPieceAccess() {
+  return getApprovedPiecePayments().some(
+    (payment) =>
+      ["piece", "unlimited"].includes(payment?.purpose) &&
+      payment.status === "APPROVED",
+  );
+}
+
+function redirectToUnlimitedCheckout() {
+  const checkoutUrl = new URL("/payment.html", window.location.origin);
+  checkoutUrl.searchParams.set("purpose", "unlimited");
+  const referralCode = new URLSearchParams(window.location.search).get("ref");
+  if (referralCode && /^[A-Z0-9-]{3,20}$/i.test(referralCode)) {
+    checkoutUrl.searchParams.set("ref", referralCode.toUpperCase());
+  }
+  window.location.assign(checkoutUrl.href);
+}
+
 function saveWardrobeToStorage() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(wardrobeItems));
-  } catch (err) {
-    console.warn("Storage quota exceeded, preserving wardrobe items:", err);
+    const storedWardrobe = localStorage.getItem(STORAGE_KEY);
+    let previousItems = [];
+    if (storedWardrobe) {
+      try {
+        const parsedItems = JSON.parse(storedWardrobe);
+        if (Array.isArray(parsedItems)) previousItems = parsedItems;
+      } catch {
+        previousItems = [];
+      }
+    }
+
+    const previousIds = new Set(previousItems.map((item) => item?.id));
+    const addedItems = wardrobeItems.filter((item) => !previousIds.has(item?.id));
+    if (addedItems.length > 0 && !hasUnlimitedPieceAccess()) {
+      wardrobeItems = previousItems;
+      renderWardrobeGrid();
+      redirectToUnlimitedCheckout();
+      return false;
+    }
+
     try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(wardrobeItems));
+    } catch (storageError) {
       const safeItems = wardrobeItems.map((item) => {
-        if (typeof item.image === "string" && item.image.startsWith("data:image/") && item.image.length > 50000) {
+        if (
+          typeof item.image === "string" &&
+          item.image.startsWith("data:image/") &&
+          item.image.length > 50000
+        ) {
           return { ...item, image: "" };
         }
         return item;
       });
       localStorage.setItem(STORAGE_KEY, JSON.stringify(safeItems));
-    } catch (e) {
-      console.error("Storage completely full:", e);
     }
+  } catch (err) {
+    console.error("Could not save wardrobe items:", err);
+    alert("Could not save the wardrobe change. Check browser storage and try again.");
+    return false;
   }
+
   updateBadgeCounts();
   drawColorWheel();
+  return true;
 }
 
 function resetToDefaultData() {
@@ -1379,6 +1435,17 @@ function drawColorWheel() {
 let currentUploadedDataUrl = null;
 
 function openUploadModal() {
+  try {
+    if (!hasUnlimitedPieceAccess()) {
+      redirectToUnlimitedCheckout();
+      return;
+    }
+  } catch (error) {
+    console.error("Could not check paid piece credits:", error);
+    alert("Could not verify payment status. Please try again or contact support.");
+    return;
+  }
+
   document.getElementById("upload-modal").classList.remove("hidden");
   document.getElementById("item-title").focus();
 }
@@ -1423,86 +1490,16 @@ function compressImage(file, maxDimension = 512, quality = 0.75) {
 async function previewSelectedImage(event) {
   const files = Array.from(event.target.files || []);
   if (!files.length) return;
+  if (files.length > 1) {
+    alert("One piece can be added per payment. Please select one photo at a time.");
+    event.target.value = "";
+    return;
+  }
 
   const statusBox = document.getElementById("batch-upload-status");
   const statusText = document.getElementById("batch-status-text");
 
-  // Batch upload: multiple photos selected -> auto-analyze all with AI
-  if (files.length > 1) {
-    if (statusBox) statusBox.classList.remove("hidden");
-    const saveBtn = document.querySelector("#upload-form button[type='submit']");
-    if (saveBtn) saveBtn.disabled = true;
-
-    for (let i = 0; i < files.length; i++) {
-      if (statusText) {
-        statusText.innerText = `Processing photo ${i + 1} of ${files.length}...`;
-      }
-      try {
-        const compressed = await compressImage(files[i], 512, 0.75);
-        let itemAdded = false;
-
-        try {
-          const currentUserId = window.Clerk?.user?.id || "";
-          const res = await fetch("/api/analyze-item", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ image: compressed, userId: currentUserId }),
-          });
-          if (res.ok) {
-            const data = await res.json();
-            if (data && data.title) {
-              wardrobeItems.unshift(data);
-              itemAdded = true;
-            }
-          }
-        } catch (fetchErr) {
-          console.warn("AI analysis network call failed for photo " + (i + 1), fetchErr);
-        }
-
-        // If AI analysis was not available, save photo with default details
-        if (!itemAdded) {
-          let imageUrl = compressed;
-          try {
-            const upRes = await fetch("/api/upload", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ image: compressed }),
-            });
-            if (upRes.ok) {
-              const upData = await upRes.json();
-              if (upData?.url) imageUrl = upData.url;
-            }
-          } catch (_) {}
-
-          const rawName = files[i].name ? files[i].name.replace(/\.[^/.]+$/, "") : "Piece " + (i + 1);
-          const guessedCat = guessCategoryFromFilename(files[i].name);
-          wardrobeItems.unshift({
-            id: "item-" + Date.now() + "-" + i,
-            title: rawName.slice(0, 40),
-            category: guessedCat,
-            color: "#4a5568",
-            pattern: "solid",
-            season: "all",
-            image: imageUrl,
-          });
-        }
-      } catch (err) {
-        console.error("Batch item processing error:", err);
-      }
-      if (i < files.length - 1) {
-        await new Promise((r) => setTimeout(r, 600));
-      }
-    }
-
-    saveWardrobeToStorage();
-    renderWardrobeGrid();
-    if (statusBox) statusBox.classList.add("hidden");
-    if (saveBtn) saveBtn.disabled = false;
-    closeUploadModal();
-    return;
-  }
-
-  // Single photo: preview and auto-detect details for form
+  // Preview and auto-detect details for the new wardrobe piece.
   const file = files[0];
   try {
     const compressed = await compressImage(file, 512, 0.75);
@@ -1613,6 +1610,17 @@ function extractDominantColor(dataUrl) {
 
 async function handleFormSubmit(event) {
   event.preventDefault();
+  try {
+    if (!hasUnlimitedPieceAccess()) {
+      closeUploadModal();
+      redirectToUnlimitedCheckout();
+      return;
+    }
+  } catch (error) {
+    console.error("Could not verify paid piece credits:", error);
+    alert("Could not verify payment status. Please try again or contact support.");
+    return;
+  }
 
   const title = document.getElementById("item-title").value.trim();
   const category = document.getElementById("item-category").value;
@@ -1658,7 +1666,7 @@ async function handleFormSubmit(event) {
   };
 
   wardrobeItems.unshift(newItem);
-  saveWardrobeToStorage();
+  if (!saveWardrobeToStorage()) return;
   renderWardrobeGrid();
   closeUploadModal();
 }
@@ -1691,7 +1699,7 @@ function importWardrobeData(event) {
       const imported = JSON.parse(e.target.result);
       if (Array.isArray(imported)) {
         wardrobeItems = imported;
-        saveWardrobeToStorage();
+        if (!saveWardrobeToStorage()) return;
         renderWardrobeGrid();
         alert("Wardrobe backup successfully restored!");
       }

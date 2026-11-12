@@ -71,6 +71,20 @@ test("serves the app files without exposing env, repo, or hidden files", async (
     assert.match(await page.text(), /E-Wardrobe/);
 
     for (const pathname of [
+      "/admin.html",
+      "/admin-login.html",
+      "/admin-login.js",
+      "/payment.html",
+      "/payment.js",
+    ]) {
+      const response = await fetch(`${baseUrl}${pathname}`);
+      assert.equal(response.status, 200, pathname);
+    }
+    const dashboard = await fetch(`${baseUrl}/admin.html`);
+    assert.match(await dashboard.text(), /Admin sign in/);
+    assert.equal((await fetch(`${baseUrl}/admin.js`)).status, 404);
+
+    for (const pathname of [
       "/.env.local",
       "/server.js",
       "/tests/server.test.js",
@@ -81,6 +95,116 @@ test("serves the app files without exposing env, repo, or hidden files", async (
       assert.equal(response.status, 404, pathname);
     }
   });
+});
+
+test("protects the referral dashboard behind a signed admin session", async () => {
+  const credentials = {
+    adminPassword: "correct horse battery staple",
+    adminSessionSecret: "test-session-secret-0123456789-abcdefgh",
+  };
+  await withServer(credentials, async (baseUrl) => {
+    const unauthenticatedPage = await fetch(`${baseUrl}/admin.html`);
+    assert.match(await unauthenticatedPage.text(), /Admin sign in/);
+
+    const rejected = await fetch(`${baseUrl}/api/admin-auth`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: "wrong password" }),
+    });
+    assert.equal(rejected.status, 401);
+
+    const login = await fetch(`${baseUrl}/api/admin-auth`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: credentials.adminPassword }),
+    });
+    assert.equal(login.status, 200);
+    const cookie = login.headers.get("set-cookie");
+    assert.match(cookie, /HttpOnly/);
+    assert.match(cookie, /SameSite=Strict/);
+
+    const authenticatedPage = await fetch(`${baseUrl}/admin.html`, {
+      headers: { Cookie: cookie.split(";")[0] },
+    });
+    assert.match(await authenticatedPage.text(), /Referral dashboard/);
+    assert.equal((await fetch(`${baseUrl}/admin.js`, {
+      headers: { Cookie: cookie.split(";")[0] },
+    })).status, 200);
+
+    const logout = await fetch(`${baseUrl}/api/admin-auth`, {
+      method: "DELETE",
+      headers: { Cookie: cookie.split(";")[0] },
+    });
+    assert.equal(logout.status, 200);
+    assert.match(logout.headers.get("set-cookie"), /Max-Age=0/);
+    assert.match((await (await fetch(`${baseUrl}/admin.html`)).text()), /Admin sign in/);
+  });
+});
+
+test("serves configured UPI details without exposing them when unset", async () => {
+  await withServer({ upiId: "9058477473@kotakbank" }, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/payment-config`);
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { upiId: "9058477473@kotakbank" });
+
+    const wrongMethod = await fetch(`${baseUrl}/api/payment-config`, { method: "POST" });
+    assert.equal(wrongMethod.status, 405);
+    assert.match((await wrongMethod.json()).error, /Use GET/);
+  });
+
+  await withServer({ upiId: "" }, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/payment-config`);
+    assert.equal(response.status, 503);
+    assert.match((await response.json()).error, /UPI_ID/);
+  });
+
+  const { createHandler } = await import("../api/payment-config.mjs");
+  const handler = createHandler({ upiId: "9058477473@kotakbank" });
+  const response = await handler.fetch(new Request("https://wardrobe.example/api/payment-config"));
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { upiId: "9058477473@kotakbank" });
+});
+
+test("Vercel admin auth handler signs sessions and rejects cross-origin login", async () => {
+  const { createHandler } = await import("../api/admin-auth.mjs");
+  const credentials = {
+    adminPassword: "correct horse battery staple",
+    adminSessionSecret: "test-session-secret-0123456789-abcdefgh",
+  };
+  const handler = createHandler(credentials);
+  const wrongOrigin = await handler.fetch(
+    new Request("https://wardrobe.example/api/admin-auth", {
+      method: "POST",
+      headers: {
+        Origin: "https://other.example",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ password: credentials.adminPassword }),
+    }),
+  );
+  assert.equal(wrongOrigin.status, 403);
+
+  const login = await handler.fetch(
+    new Request("https://wardrobe.example/api/admin-auth", {
+      method: "POST",
+      headers: {
+        Origin: "https://wardrobe.example",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ password: credentials.adminPassword }),
+    }),
+  );
+  assert.equal(login.status, 200);
+  const cookie = login.headers.get("set-cookie");
+  assert.match(cookie, /Secure/);
+  assert.match(cookie, /HttpOnly/);
+
+  const session = await handler.fetch(
+    new Request("https://wardrobe.example/api/admin-auth", {
+      headers: { Cookie: cookie.split(";")[0] },
+    }),
+  );
+  assert.deepEqual(await session.json(), { authenticated: true });
 });
 
 test("validates request data before calling Groq", async () => {

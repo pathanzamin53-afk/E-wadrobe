@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en" class="dark" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#120f0d">
+  <meta name="description" content="Pay with UPI and submit your transaction reference.">
+  <title>Payment — E-Wardrobe</title>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/index.css">
+  <link rel="icon" type="image/png" href="/Favicon.png">
+  <style>
+    body {
+      min-height: 100vh;
+      padding: 24px 16px 48px;
+    }
+
+    .payment-shell {
+      position: relative;
+      z-index: 1;
+      width: min(100%, 980px);
+      margin: 0 auto;
+    }
+
+    .page-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .page-top .nav-brand {
+      width: fit-content;
+    }
+
+    .page-top-links {
+      display: flex;
+      gap: 8px;
+    }
+
+    .payment-heading {
+      margin: 0 0 22px;
+    }
+
+    .payment-heading p,
+    .muted {
+      color: var(--ink-2);
+      line-height: 1.55;
+    }
+
+    .payment-heading h1 {
+      margin-bottom: 8px;
+      font-size: clamp(2rem, 5vw, 2.8rem);
+      letter-spacing: -.04em;
+    }
+
+    .payment-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.12fr) minmax(280px, .88fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .pay-card {
+      padding: clamp(18px, 4vw, 28px);
+      border: 1px solid var(--border-mid);
+      border-radius: var(--r-lg);
+      background: var(--glass-mid);
+      box-shadow: var(--shadow-md), var(--specular);
+      backdrop-filter: blur(24px);
+    }
+
+    .pay-card h2 {
+      margin-bottom: 18px;
+      font-size: 1.08rem;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+      margin-bottom: 16px;
+    }
+
+    .field label {
+      color: var(--ink-2);
+      font-size: .86rem;
+      font-weight: 600;
+    }
+
+    .field input {
+      width: 100%;
+      min-height: 46px;
+      padding: 0 13px;
+      border: 1px solid var(--border-mid);
+      border-radius: var(--r-sm);
+      color: var(--ink);
+      background: var(--glass-input);
+      font-size: 1rem;
+    }
+
+    .field input:focus {
+      outline: 2px solid var(--accent-mid);
+      outline-offset: 1px;
+    }
+
+    .field small {
+      color: var(--ink-3);
+      line-height: 1.45;
+    }
+
+    .upi-box {
+      padding: 16px;
+      border: 1px solid var(--olive-border);
+      border-radius: var(--r-md);
+      background: var(--olive-bg);
+    }
+
+    .upi-label {
+      margin-bottom: 6px;
+      color: var(--ink-2);
+      font-size: .8rem;
+    }
+
+    .upi-value-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .upi-qr-wrap {
+      display: grid;
+      justify-items: center;
+      gap: 8px;
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: var(--r-sm);
+      background: #090909;
+    }
+
+    #upi-qr {
+      display: block;
+      width: min(100%, 300px);
+      height: auto;
+      max-width: 100%;
+      border-radius: var(--r-sm);
+    }
+
+    #upi-qr-status {
+      margin: 0;
+      color: #fff;
+      font-size: .82rem;
+      text-align: center;
+    }
+
+    #upi-id {
+      overflow-wrap: anywhere;
+      font-family: var(--mono);
+      font-weight: 700;
+    }
+
+    .copy-btn {
+      min-height: 38px;
+      padding: 0 10px;
+      border: 1px solid var(--border-mid);
+      border-radius: var(--r-sm);
+      color: var(--ink);
+      background: var(--glass);
+      white-space: nowrap;
+    }
+
+    .upi-help {
+      margin-top: 12px;
+      color: var(--ink-2);
+      font-size: .82rem;
+      line-height: 1.5;
+    }
+
+    .form-submit {
+      width: 100%;
+      min-height: 48px;
+      margin-top: 5px;
+      border-radius: var(--r-sm);
+      color: var(--ink);
+      background: var(--olive);
+      font-weight: 700;
+    }
+
+    .form-submit:hover {
+      filter: brightness(1.12);
+    }
+
+    .status-message {
+      display: none;
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: var(--r-sm);
+      line-height: 1.5;
+    }
+
+    .status-message.is-visible {
+      display: block;
+    }
+
+    .status-message.is-info {
+      color: var(--ink-2);
+      background: var(--glass);
+      border: 1px solid var(--border-mid);
+    }
+
+    .status-message.is-error {
+      color: #ffd2c9;
+      background: var(--danger-bg);
+      border: 1px solid var(--danger-border);
+    }
+
+    .status-message.is-success {
+      color: #e4efd0;
+      background: var(--olive-bg);
+      border: 1px solid var(--olive-border);
+    }
+
+    .share-box {
+      display: none;
+      margin-top: 16px;
+      padding: 16px;
+      border: 1px solid var(--border-mid);
+      border-radius: var(--r-md);
+      background: var(--glass);
+    }
+
+    .share-box.is-visible {
+      display: block;
+    }
+
+    .share-box code {
+      display: block;
+      margin: 9px 0;
+      color: var(--ink);
+      overflow-wrap: anywhere;
+    }
+
+    .notice {
+      margin-top: 18px;
+      padding: 14px;
+      border-left: 3px solid var(--olive);
+      border-radius: 0 var(--r-sm) var(--r-sm) 0;
+      background: var(--glass);
+      color: var(--ink-2);
+      font-size: .82rem;
+      line-height: 1.55;
+    }
+
+    .footnote {
+      margin-top: 18px;
+      color: var(--ink-3);
+      font-size: .78rem;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 700px) {
+      .payment-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .page-top {
+        margin-bottom: 24px;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .page-top-links .glass-pill-btn {
+        padding: 0 9px;
+        font-size: .75rem;
+      }
+    }
+  </style>
+</head>
+
+<body class="app-body">
+  <div class="ambient-glow glow-top-left" aria-hidden="true"></div>
+  <div class="ambient-glow glow-top-right" aria-hidden="true"></div>
+  <main class="payment-shell">
+    <header class="page-top">
+      <a class="nav-brand" href="/" aria-label="E-Wardrobe home">
+        <span class="brand-title">E-Wardrobe</span>
+      </a>
+      <nav class="page-top-links" aria-label="Payment navigation">
+        <a class="glass-pill-btn" href="/"><i class="fa-solid fa-arrow-left"
+            aria-hidden="true"></i><span>Home</span></a>
+      </nav>
+    </header>
+
+    <section class="payment-heading">
+      <h1>UPI payment</h1>
+      <p>One time payment and After approval Get Unlimited access</p>
+    </section>
+
+    <div class="payment-grid">
+      <section class="pay-card" aria-labelledby="payment-details-title">
+        <h2 id="payment-details-title">Payment details</h2>
+        <form id="payment-form">
+          <div class="field">
+            <label for="customer-name">Name</label>
+            <input id="customer-name" name="name" autocomplete="name" maxlength="80" required>
+          </div>
+          <div class="field">
+            <label for="amount">Unlimited access</label>
+            <input id="amount" name="amount" type="number" min="49" max="99" step="50" value="99" readonly required>
+            <small id="price-note">One-time access: ₹99. Valid referral code ke saath: ₹49.</small>
+          </div>
+          <div class="field">
+            <label for="referral-code">Referral code <span class="muted">(optional)</span></label>
+            <input id="referral-code" name="referralCode" maxlength="20" autocomplete="off" placeholder="Enter a code">
+          </div>
+          <div class="upi-box">
+            <p class="upi-label">Pay to this UPI ID</p>
+            <div class="upi-value-row">
+              <span id="upi-id" aria-live="polite">Loading UPI ID…</span>
+              <button id="copy-upi" class="copy-btn" type="button" disabled>Copy UPI ID</button>
+            </div>
+            <div class="upi-qr-wrap">
+              <img id="upi-qr" src="/kotak-upi-qr.jpeg" alt="Kotak UPI QR code for Zulfikar Khan" width="768"
+                height="1553">
+              <p id="upi-qr-status" role="status" aria-live="polite">Scan the QR code and enter ₹99 in your UPI app.</p>
+            </div>
+            <p class="upi-help">This QR code does not set the payment amount. Scan it and enter the displayed amount
+              manually: ₹99 without a referral code, or ₹49 with a valid code. If you are viewing this page on the
+              same phone you want to pay with, open your UPI app and enter the UPI ID above manually.</p>
+          </div>
+
+          <div class="field" style="margin-top: 18px;">
+            <label for="utr">UPI transaction reference / UTR</label>
+            <input id="utr" name="utr" minlength="6" maxlength="35" autocomplete="off" autocapitalize="characters"
+              placeholder="Enter the reference shown by your UPI app" required>
+            <small>Complete the payment in your UPI app before submitting. The admin will verify it manually via bank
+              statement.</small>
+          </div>
+          <button class="form-submit" type="submit">Submit ₹99 payment for review</button>
+          <div id="form-message" class="status-message" role="status" aria-live="polite"></div>
+        </form>
+
+      </section>
+
+      <aside class="pay-card">
+        <h2>Before you pay</h2>
+        <ol class="muted" style="padding-left: 20px; line-height: 1.8;">
+          <li>Get one-time unlimited access for ₹99, or ₹49 with a valid referral code. Scan the QR and enter the
+            displayed amount.</li>
+          <li>Complete the payment via the UPI app and copy the transaction reference ID.</li>
+          <li>Please return and submit your UTR. Your status will remain pending until reviewed.</li>
+        </ol>
+        <div class="notice"><strong>Payment verification:</strong> The UPI application will display the pay details
+          prior to payment confirmation. Please note that submitting a UTR does not serve as proof of payment; approval
+          will only be granted after the administrator verifies the transaction against the bank or UPI statement.</div>
+    </div>
+  </main>
+  <script src="/payment.js" defer></script>
+</body>
+
+</html>
