@@ -72,25 +72,36 @@
 
       const statusCell = document.createElement("td");
       const status = document.createElement("span");
-      const normalizedStatus = ["PENDING", "APPROVED", "REJECTED"].includes(payment.status)
+      const normalizedStatus = ["PENDING", "APPROVED", "REJECTED", "CANCELLED"].includes(payment.status)
         ? payment.status
         : "PENDING";
       status.className = `status status-${normalizedStatus.toLowerCase()}`;
       status.textContent = normalizedStatus;
       statusCell.append(status);
+      const actions = document.createElement("div");
+      actions.className = "actions";
       if (normalizedStatus === "PENDING") {
-        const actions = document.createElement("div");
-        actions.className = "actions";
-        for (const [label, nextStatus] of [["Approve", "APPROVED"], ["Reject", "REJECTED"]]) {
-          const button = document.createElement("button");
-          button.className = "action-btn";
-          button.type = "button";
-          button.textContent = label;
-          button.addEventListener("click", () => updatePaymentStatus(payment.orderId, nextStatus));
-          actions.append(button);
-        }
-        statusCell.append(actions);
+        const approveButton = document.createElement("button");
+        approveButton.className = "action-btn";
+        approveButton.type = "button";
+        approveButton.textContent = "Approve";
+        approveButton.addEventListener("click", () => updatePaymentStatus(payment.orderId, "APPROVED"));
+        actions.append(approveButton);
+
+        const cancelButton = document.createElement("button");
+        cancelButton.className = "action-btn";
+        cancelButton.type = "button";
+        cancelButton.textContent = "Cancel request";
+        cancelButton.addEventListener("click", () => cancelPaymentRequest(payment.orderId));
+        actions.append(cancelButton);
       }
+      const deleteButton = document.createElement("button");
+      deleteButton.className = "action-btn action-btn-danger";
+      deleteButton.type = "button";
+      deleteButton.textContent = "Delete";
+      deleteButton.addEventListener("click", () => deletePayment(payment.orderId));
+      actions.append(deleteButton);
+      statusCell.append(actions);
       row.append(statusCell);
       paymentRows.append(row);
     }
@@ -132,6 +143,29 @@
       render();
     } catch (error) {
       feedback.textContent = `Could not update payment: ${error.message}`;
+    }
+  }
+
+  function cancelPaymentRequest(orderId) {
+    if (!window.confirm(`Cancel the pending request ${orderId}?`)) return;
+    updatePaymentStatus(orderId, "CANCELLED");
+  }
+
+  function deletePayment(orderId) {
+    if (!window.confirm(`Permanently delete request ${orderId}? This cannot be undone.`)) return;
+    try {
+      const payments = loadPayments();
+      const paymentIndex = payments.findIndex((item) => item.orderId === orderId);
+      if (paymentIndex === -1) {
+        feedback.textContent = "Payment could not be found.";
+        return;
+      }
+      payments.splice(paymentIndex, 1);
+      localStorage.setItem(PAYMENTS_KEY, JSON.stringify(payments));
+      feedback.textContent = `${orderId} deleted from this browser.`;
+      render();
+    } catch (error) {
+      feedback.textContent = `Could not delete payment: ${error.message}`;
     }
   }
 

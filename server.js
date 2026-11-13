@@ -1,3 +1,4 @@
+const fs = require("node:fs");
 const http = require("node:http");
 const { readFile } = require("node:fs/promises");
 const { extname, join, relative, resolve, sep } = require("node:path");
@@ -12,6 +13,39 @@ const {
 } = require("./admin-auth");
 
 const ROOT = __dirname;
+
+function loadDotEnvFiles() {
+  const envFiles = [
+    resolve(ROOT, ".env"),
+    resolve(ROOT, ".env.local"),
+  ];
+
+  for (const envPath of envFiles) {
+    try {
+      const content = fs.readFileSync(envPath, "utf8");
+      for (const line of content.split(/\r?\n/)) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith("#")) continue;
+
+        const match = trimmed.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/);
+        if (!match) continue;
+
+        let [, key, rawValue] = match;
+        if ((rawValue.startsWith('"') && rawValue.endsWith('"')) ||
+          (rawValue.startsWith("'") && rawValue.endsWith("'"))) {
+          rawValue = rawValue.slice(1, -1);
+        }
+
+        process.env[key] = rawValue;
+      }
+    } catch {
+      // Ignore absent env files; environment variables already provided by the host.
+    }
+  }
+}
+
+loadDotEnvFiles();
+
 const HOST = "127.0.0.1";
 const PORT = Number(process.env.PORT || 3000);
 const MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-20b";
@@ -992,6 +1026,7 @@ module.exports = {
   MAX_BODY_BYTES,
   RequestError,
   assertSameOrigin,
+  loadDotEnvFiles,
   isValidUpiId: validUpiId,
   createAdminSessionCookie,
   clearAdminSessionCookie,

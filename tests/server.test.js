@@ -165,6 +165,34 @@ test("serves configured UPI details without exposing them when unset", async () 
   assert.deepEqual(await response.json(), { upiId: "9058477473@kotakbank" });
 });
 
+test("loads environment variables from .env.local when they are not already set", () => {
+  const { loadDotEnvFiles } = require("../server");
+  const previous = {
+    UPI_ID: process.env.UPI_ID,
+    ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
+    ADMIN_SESSION_SECRET: process.env.ADMIN_SESSION_SECRET,
+  };
+
+  delete process.env.UPI_ID;
+  delete process.env.ADMIN_PASSWORD;
+  delete process.env.ADMIN_SESSION_SECRET;
+
+  try {
+    loadDotEnvFiles();
+    assert.match(process.env.UPI_ID, /^[A-Za-z0-9._-]+@[A-Za-z][A-Za-z0-9]+$/);
+    assert.ok(process.env.ADMIN_PASSWORD.length >= 12);
+    assert.ok(process.env.ADMIN_SESSION_SECRET.length >= 32);
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+  }
+});
+
 test("Vercel admin auth handler signs sessions and rejects cross-origin login", async () => {
   const { createHandler } = await import("../api/admin-auth.mjs");
   const credentials = {
